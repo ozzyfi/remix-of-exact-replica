@@ -2701,10 +2701,115 @@
     transform: translateX(-50%);
     width: 28px;
     height: 3px;
-    background: var(--accent);
+  background: var(--accent);
     border-radius: 0 0 3px 3px;
   }
 </style>
+<script type="module">
+  // ================== ToolA ↔ Lovable Cloud bridge ==================
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+  const SUPABASE_URL = 'https://jyvcoiahdarwbbftinee.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5dmNvaWFoZGFyd2JiZnRpbmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTA2ODgsImV4cCI6MjA5MjY4NjY4OH0.6foYlwENS-i9qwtBzFuK5BPWupjqxNxLODenrXbaNuQ';
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true }
+  });
+  window.supabase = supabase;
+
+  // App state from React parent (defaults work for standalone preview too)
+  window.__APP_STATE__ = {
+    userId: 'demo-user',
+    fullName: 'Mehmet Yılmaz',
+    region: 'Marmara',
+    role: 'technician',
+    client: 'Putzmeister',
+    contributionScore: 145,
+    badge: 'deneyimli',
+    isDemo: true
+  };
+
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'TOOLA_APP_STATE' && e.data.payload) {
+      window.__APP_STATE__ = e.data.payload;
+      console.log('[ToolA] APP State:', window.__APP_STATE__);
+    }
+  });
+  // Ask parent to push state on load
+  try { window.parent?.postMessage({ type: 'TOOLA_REQUEST_STATE' }, '*'); } catch {}
+
+  // ---- Helpers exposed to legacy inline scripts ----
+  window.fetchCorrections = async function(region) {
+    try {
+      const { data } = await supabase
+        .from('correction_rules')
+        .select('scene_pattern, wrong, correct, lesson')
+        .eq('region', region)
+        .eq('is_active', true)
+        .order('applied_count', { ascending: false })
+        .limit(10);
+      return data || [];
+    } catch (err) {
+      console.warn('[ToolA] fetchCorrections failed:', err);
+      return [];
+    }
+  };
+
+  window.callDiagnose = async function({ question, history = [], mode, woId = null }) {
+    const state = window.__APP_STATE__ || {};
+    const region = state.region || 'Marmara';
+    const detectedMode = mode || (/H-\d+|P-\d+|alarm|arıza|basınç|pompa/i.test(question) ? 'diagnosis' : 'info');
+    const corrections = await window.fetchCorrections(region);
+
+    const { data, error } = await supabase.functions.invoke('diagnose', {
+      body: {
+        question,
+        image_base64: null,
+        image_media_type: null,
+        region,
+        corrections,
+        history,
+        mode: detectedMode,
+        wo_id: woId || null
+      }
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  // Persist a diagnosis_sessions turn (best-effort, requires auth)
+  window.saveSessionTurn = async function(thread, turn) {
+    try {
+      const state = window.__APP_STATE__ || {};
+      if (!state.userId || state.isDemo) return;
+      if (!thread._dbId) {
+        const { data, error } = await supabase
+          .from('diagnosis_sessions')
+          .insert({
+            user_id: state.userId,
+            title: thread.title,
+            machine_name: thread.machine || null,
+            wo_id: thread.woId || null,
+            turns: [turn],
+            status: 'active'
+          })
+          .select('id')
+          .single();
+        if (error) throw error;
+        thread._dbId = data.id;
+      } else {
+        const turns = (thread.messages || []).map(m => ({
+          role: m.role, text: m.text, type: m.type || null, ts: m.ts
+        }));
+        await supabase.from('diagnosis_sessions')
+          .update({ turns, updated_at: new Date().toISOString() })
+          .eq('id', thread._dbId);
+      }
+    } catch (err) {
+      console.warn('[ToolA] saveSessionTurn failed:', err);
+    }
+  };
+</script>
 </head>
 <body>
 
