@@ -3030,6 +3030,89 @@
 
     return { ok: true, score: newScore };
   };
+
+  // ---- Home: contribution card + supervisor panel ----
+  function badgeLabel(b) {
+    return ({ yeni:'yeni', deneyimli:'deneyimli', uzman:'uzman', usta:'usta' })[b] || 'yeni';
+  }
+  function initials(name) {
+    if (!name) return 'M';
+    const parts = String(name).trim().split(/\s+/);
+    return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || 'M';
+  }
+
+  window.renderContribCard = async function() {
+    const s = window.__APP_STATE__ || {};
+    const name = s.fullName || 'Teknisyen';
+    const score = s.contributionScore || 0;
+    const badge = s.badge || 'yeni';
+
+    const setText = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    setText('contribAvatar', initials(name));
+    setText('contribName', name);
+    setText('contribScoreVal', String(score));
+    const badgeEl = document.getElementById('contribBadge');
+    if (badgeEl) {
+      badgeEl.className = 'contrib-badge ' + badge;
+      badgeEl.textContent = badgeLabel(badge);
+    }
+
+    let vaka = 0, duzeltme = 0;
+    if (s.isDemo || !s.userId) {
+      vaka = 12; duzeltme = 3;
+    } else {
+      try {
+        const [{ count: v }, { count: d }] = await Promise.all([
+          supabase.from('learning_cases').select('*', { count: 'exact', head: true }).eq('created_by', s.userId),
+          supabase.from('corrections').select('*', { count: 'exact', head: true }).eq('created_by', s.userId),
+        ]);
+        vaka = v || 0; duzeltme = d || 0;
+      } catch (err) {
+        console.warn('[ToolA] contrib counts failed:', err);
+      }
+    }
+    setText('contribMeta', `${vaka} vaka · ${duzeltme} düzeltme`);
+
+    // Supervisor panel
+    const supEl = document.getElementById('supPanel');
+    if (!supEl) return;
+    if (s.role !== 'supervisor') { supEl.style.display = 'none'; return; }
+    supEl.style.display = '';
+
+    if (s.isDemo) {
+      setText('supTopAlarm', 'H-201');
+      setText('supActiveSessions', '4');
+      setText('supLearnedRules', '17');
+      return;
+    }
+    try {
+      const { data: lc } = await supabase
+        .from('learning_cases').select('alarm').eq('bolge', s.region || '').limit(500);
+      const tally = {};
+      (lc || []).forEach(r => { if (r.alarm) tally[r.alarm] = (tally[r.alarm] || 0) + 1; });
+      const top = Object.entries(tally).sort((a,b) => b[1]-a[1])[0];
+      setText('supTopAlarm', top ? top[0] : '—');
+
+      const { count: act } = await supabase
+        .from('diagnosis_sessions').select('*', { count: 'exact', head: true }).eq('status', 'active');
+      setText('supActiveSessions', String(act || 0));
+
+      const { count: rules } = await supabase
+        .from('correction_rules').select('*', { count: 'exact', head: true })
+        .eq('is_active', true).eq('region', s.region || '');
+      setText('supLearnedRules', String(rules || 0));
+    } catch (err) {
+      console.warn('[ToolA] supervisor stats failed:', err);
+    }
+  };
+
+  // Render on load + whenever app state arrives/changes
+  document.addEventListener('DOMContentLoaded', () => window.renderContribCard?.());
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'TOOLA_APP_STATE' || e.data?.type === 'TOOLA_STATE_PATCH') {
+      setTimeout(() => window.renderContribCard?.(), 0);
+    }
+  });
 </script>
 </head>
 <body>
