@@ -4415,13 +4415,15 @@
     showToast(currentMachine.name + ' için iş bildirimi dispatcher\'a gönderildi');
   }
 
-  function openCorrectionWO() {
-    // Kapalı bir iş emrinde hata varsa düzeltme için yeni WO açılır
-    // Orijinal kayıt değişmez (immutable), yeni bir WO eski WO'ya referans verir
+  async function openCorrectionWO() {
     if (!currentThread) return;
     const originalWo = currentThread.woId;
-    showToast('Düzeltme iş emri açıldı · ' + originalWo + ' referans alındı');
-    // Yeni bir düzeltme WO'su aç (demo için)
+    showToast('Düzeltme iş emri açıldı · ' + (originalWo || '—') + ' referans alındı');
+    // Negatif feedback kaydı + score
+    try {
+      const res = await window.recordNegativeFeedback?.(currentThread);
+      if (res?.ok) showToast('Geri bildirim alındı · +5 katkı puanı');
+    } catch {}
     closeContext = {
       woId: 'WO-' + Math.floor(4500 + Math.random() * 100) + '-D',
       machine: currentThread.machine || 'BSF 36-4.16H',
@@ -4436,16 +4438,35 @@
     }, 1200);
   }
 
-  function sendFeedback(btn, positive) {
-    // Önce aynı row'daki tüm buton seçimlerini kaldır
+  async function sendFeedback(btn, positive) {
     const row = btn.closest('.feedback-row');
     row.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
 
     if (positive) {
-      showToast('Teşekkürler · ToolA öğreniyor');
+      try {
+        const res = await window.recordPositiveFeedback?.(currentThread);
+        if (res?.ok) {
+          showToast('Teşekkürler · ToolA öğreniyor · +10 katkı puanı');
+        } else {
+          showToast('Teşekkürler · ToolA öğreniyor');
+        }
+      } catch (err) {
+        console.warn('[ToolA] sendFeedback positive failed:', err);
+        showToast('Teşekkürler · ToolA öğreniyor');
+      }
     } else {
-      showToast('Geri bildirim alındı · bu prosedür iyileştirilecek');
+      try {
+        const res = await window.recordNegativeFeedback?.(currentThread);
+        if (res?.ok) {
+          showToast('Geri bildirim alındı · +5 katkı puanı');
+        } else {
+          showToast('Geri bildirim alındı · bu prosedür iyileştirilecek');
+        }
+      } catch (err) {
+        console.warn('[ToolA] sendFeedback negative failed:', err);
+        showToast('Geri bildirim alındı · bu prosedür iyileştirilecek');
+      }
     }
   }
 
