@@ -2903,7 +2903,58 @@
       return { ok: false, error: err };
     }
   };
-</script>
+
+  // Accept a captured failure → log to corrections + train via diagnose(correction)
+  window.recordAcceptFailure = async function({ thread, capturedText }) {
+    const state = window.__APP_STATE__ || {};
+    const newScore = (state.contributionScore || 0) + 15;
+    const newBadge = window.calculateBadge(newScore);
+    window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+    try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+
+    if (state.isDemo || !state.userId) return { ok: true, demo: true, score: newScore };
+
+    const scene = capturedText || thread?.title || '';
+    try {
+      await supabase.from('corrections').insert({
+        scene,
+        wrong: 'Sahadaki gözlemle uyuşmayan teşhis',
+        correct: '',
+        lesson: '',
+        bolge: state.region,
+        usta: thread?.ustaAdi || 'ToolA',
+        wo_id: thread?.woId || null,
+        created_by: state.userId
+      });
+    } catch (err) {
+      console.warn('[ToolA] recordAcceptFailure: corrections insert failed:', err);
+    }
+
+    try {
+      await supabase.functions.invoke('diagnose', {
+        body: {
+          question: scene,
+          region: state.region,
+          corrections: [],
+          history: [],
+          mode: 'correction',
+          wo_id: thread?.woId || null
+        }
+      });
+    } catch (err) {
+      console.warn('[ToolA] recordAcceptFailure: diagnose(correction) failed:', err);
+    }
+
+    try {
+      await supabase.from('profiles')
+        .update({ contribution_score: newScore, badge: newBadge })
+        .eq('id', state.userId);
+    } catch (err) {
+      console.warn('[ToolA] recordAcceptFailure: profile update failed:', err);
+    }
+
+    return { ok: true, score: newScore };
+  };
 </head>
 <body>
 
