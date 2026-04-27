@@ -87,7 +87,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AppContext.Provider value={{ appState, loading, refresh: loadProfile }}>
+    <AppContext.Provider
+      value={{
+        appState,
+        loading,
+        refresh: loadProfile,
+        patch: (p) => setAppState((prev) => ({ ...prev, ...p })),
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
