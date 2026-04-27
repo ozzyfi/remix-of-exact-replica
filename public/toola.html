@@ -2774,7 +2774,34 @@
       }
     });
     if (error) throw error;
+
+    // Best-effort: increment applied_count for the correction rules we sent
+    if (!state.isDemo && corrections.length > 0) {
+      window.incrementAppliedCount?.(region, corrections).catch(() => {});
+    }
     return data;
+  };
+
+  // Bump applied_count for the correction rules used in this call
+  window.incrementAppliedCount = async function(region, usedCorrections) {
+    try {
+      const patterns = usedCorrections.map(c => c.scene_pattern).filter(Boolean);
+      if (!patterns.length) return;
+      const { data: rules } = await supabase
+        .from('correction_rules')
+        .select('id, applied_count, scene_pattern')
+        .eq('region', region)
+        .eq('is_active', true)
+        .in('scene_pattern', patterns);
+      if (!rules) return;
+      await Promise.all(rules.map(r =>
+        supabase.from('correction_rules')
+          .update({ applied_count: (r.applied_count || 0) + 1 })
+          .eq('id', r.id)
+      ));
+    } catch (err) {
+      console.warn('[ToolA] incrementAppliedCount failed:', err);
+    }
   };
 
   // Persist a diagnosis_sessions turn (best-effort, requires auth)
@@ -2875,6 +2902,58 @@
       console.warn('[ToolA] recordNegativeFeedback failed:', err);
       return { ok: false, error: err };
     }
+  };
+
+  // Accept a captured failure → log to corrections + train via diagnose(correction)
+  window.recordAcceptFailure = async function({ thread, capturedText }) {
+    const state = window.__APP_STATE__ || {};
+    const newScore = (state.contributionScore || 0) + 15;
+    const newBadge = window.calculateBadge(newScore);
+    window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+    try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+
+    if (state.isDemo || !state.userId) return { ok: true, demo: true, score: newScore };
+
+    const scene = capturedText || thread?.title || '';
+    try {
+      await supabase.from('corrections').insert({
+        scene,
+        wrong: 'Sahadaki gözlemle uyuşmayan teşhis',
+        correct: '',
+        lesson: '',
+        bolge: state.region,
+        usta: thread?.ustaAdi || 'ToolA',
+        wo_id: thread?.woId || null,
+        created_by: state.userId
+      });
+    } catch (err) {
+      console.warn('[ToolA] recordAcceptFailure: corrections insert failed:', err);
+    }
+
+    try {
+      await supabase.functions.invoke('diagnose', {
+        body: {
+          question: scene,
+          region: state.region,
+          corrections: [],
+          history: [],
+          mode: 'correction',
+          wo_id: thread?.woId || null
+        }
+      });
+    } catch (err) {
+      console.warn('[ToolA] recordAcceptFailure: diagnose(correction) failed:', err);
+    }
+
+    try {
+      await supabase.from('profiles')
+        .update({ contribution_score: newScore, badge: newBadge })
+        .eq('id', state.userId);
+    } catch (err) {
+      console.warn('[ToolA] recordAcceptFailure: profile update failed:', err);
+    }
+
+    return { ok: true, score: newScore };
   };
 </script>
 </head>
@@ -4191,7 +4270,7 @@
     capturedObservations = [];
   }
 
-  function acceptFailure() {
+  async function acceptFailure() {
     const panel = document.getElementById('aiFailurePanel');
     panel.innerHTML = `
       <div class="ai-failure-panel" style="background: var(--accent-bg); border-color: var(--accent); border-left-color: var(--accent);">
@@ -4202,6 +4281,16 @@
         <div style="color: var(--text-2); font-size: 12px;">Bu arıza türü için bir sonraki teşhiste bu bilgi gösterilecek.</div>
       </div>
     `;
+    const capturedText = capturedFailures[0]?.raw || '';
+    try {
+      const res = await window.recordAcceptFailure?.({ thread: currentThread, capturedText });
+      const score = res?.score;
+      showToast(score ? `Hafızaya eklendi · +15 katkı puanı · Toplam: ${score}` : 'Hafızaya eklendi · +15 katkı puanı');
+    } catch (err) {
+      console.warn('[ToolA] acceptFailure failed:', err);
+      showToast('Hafızaya eklendi (çevrimdışı)');
+    }
+    capturedFailures = [];
   }
 
   function rejectFailure() {
