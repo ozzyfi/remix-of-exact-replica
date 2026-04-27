@@ -2809,6 +2809,73 @@
       console.warn('[ToolA] saveSessionTurn failed:', err);
     }
   };
+
+  window.calculateBadge = function(score) {
+    if (score >= 300) return 'usta';
+    if (score >= 150) return 'uzman';
+    if (score >= 50) return 'deneyimli';
+    return 'yeni';
+  };
+
+  window.recordPositiveFeedback = async function(thread) {
+    const state = window.__APP_STATE__ || {};
+    const newScore = (state.contributionScore || 0) + 10;
+    const newBadge = window.calculateBadge(newScore);
+    window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+    try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+
+    if (state.isDemo || !state.userId) return { ok: true, demo: true, score: newScore };
+    try {
+      await supabase.from('learning_cases').insert({
+        alarm: thread?.alarmCode || null,
+        diagnosis: thread?.title || '',
+        success: true,
+        usta: thread?.ustaAdi || 'ToolA',
+        bolge: state.region,
+        month: new Date().toISOString().substring(0, 7),
+        machine_id: thread?.machineId || null,
+        wo_id: thread?.woId || null,
+        created_by: state.userId,
+        discovered_by_name: state.fullName
+      });
+      await supabase.from('profiles')
+        .update({ contribution_score: newScore, badge: newBadge })
+        .eq('id', state.userId);
+      return { ok: true, score: newScore };
+    } catch (err) {
+      console.warn('[ToolA] recordPositiveFeedback failed:', err);
+      return { ok: false, error: err };
+    }
+  };
+
+  window.recordNegativeFeedback = async function(thread) {
+    const state = window.__APP_STATE__ || {};
+    const newScore = (state.contributionScore || 0) + 5;
+    const newBadge = window.calculateBadge(newScore);
+    window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+    try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+
+    if (state.isDemo || !state.userId) return { ok: true, demo: true, score: newScore };
+    try {
+      await supabase.from('corrections').insert({
+        scene: thread?.title || '',
+        wrong: 'Teknisyen prosedürü reddetti',
+        correct: '',
+        lesson: '',
+        bolge: state.region,
+        usta: thread?.ustaAdi || 'ToolA',
+        wo_id: thread?.woId || null,
+        created_by: state.userId
+      });
+      await supabase.from('profiles')
+        .update({ contribution_score: newScore, badge: newBadge })
+        .eq('id', state.userId);
+      return { ok: true, score: newScore };
+    } catch (err) {
+      console.warn('[ToolA] recordNegativeFeedback failed:', err);
+      return { ok: false, error: err };
+    }
+  };
 </script>
 </head>
 <body>
