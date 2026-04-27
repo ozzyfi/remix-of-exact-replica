@@ -5636,29 +5636,153 @@
     })();
   }
 
-  function submitClose() {
-    // Update modal with dynamic context
+  async function submitClose() {
     const successId = document.getElementById('successId');
     const successSub = document.getElementById('successSub');
-    if (closeContext.woId) {
-      successId.textContent = closeContext.woId;
+    const woCode = closeContext.woId || null;
+
+    // ---- Collect form values ----
+    const category = currentCat;
+    const spec = CATEGORY_FORMS[category];
+    const formValues = {};
+    (spec?.fields || []).forEach(f => {
+      const el = document.getElementById('f-' + f.id);
+      const v = el ? el.value.trim() : '';
+      if (v) formValues[f.id] = v;
+    });
+    const filledCount = Object.values(formValues).filter(Boolean).length;
+    const gain = filledCount >= 4 ? 20 : filledCount >= 2 ? 10 : 5;
+
+    // Mark thread closed locally
+    if (woCode && threads.length > 0) {
+      const thread = threads.find(t => t.woId === woCode && t.status === 'active');
+      if (thread) { thread.status = 'closed'; thread.lastActiveAt = Date.now(); }
+    }
+
+    // Show modal immediately — backend work continues in background
+    if (woCode) {
+      successId.textContent = woCode;
       successId.style.display = 'inline-block';
-      successSub.innerHTML = 'SAP ve Maximo\'ya gönderildi.<br>Kurumsal hafızaya eklendi.';
     } else {
       successId.style.display = 'none';
-      successSub.innerHTML = 'Kayıt oluşturuldu.<br>SAP ve Maximo\'ya gönderildi.';
     }
-
-    // If there's an active thread for this WO, mark it closed
-    if (closeContext.woId && threads.length > 0) {
-      const thread = threads.find(t => t.woId === closeContext.woId && t.status === 'active');
-      if (thread) {
-        thread.status = 'closed';
-        thread.lastActiveAt = Date.now();
-      }
-    }
-
+    successSub.innerHTML = 'Kaydediliyor…';
     document.getElementById('successModal').classList.add('active');
+
+    const state = window.__APP_STATE__ || {};
+    const isDemo = state.isDemo || !state.userId;
+
+    let woRow = null;
+    let machineId = null;
+    let alarmCode = null;
+    let newScore = state.contributionScore || 0;
+    let reportUrl = null;
+
+    // Demo path → skip backend
+    if (isDemo) {
+      newScore += gain;
+      const newBadge = window.calculateBadge ? window.calculateBadge(newScore) : state.badge;
+      window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+      try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+      successSub.innerHTML = 'SAP ve Maximo\'ya gönderildi.<br>+' + gain + ' katkı puanı · Toplam: ' + newScore;
+      return;
+    }
+
+    // ---- ADIM 2: Lookup work order + update ----
+    try {
+      if (woCode) {
+        const { data, error } = await supabase
+          .from('work_orders')
+          .select('id, machine_id, alarm_code')
+          .eq('code', woCode)
+          .maybeSingle();
+        if (!error && data) {
+          woRow = data;
+          machineId = data.machine_id;
+          alarmCode = data.alarm_code;
+        }
+
+        await supabase.from('work_orders')
+          .update({
+            status: 'closed',
+            closed_at: new Date().toISOString(),
+            closing_notes: { category, ...formValues }
+          })
+          .eq('code', woCode);
+      }
+    } catch (err) { console.warn('[ToolA] step2 work_orders update failed:', err); }
+
+    // ---- ADIM 3: machine_service_history ----
+    try {
+      await supabase.from('machine_service_history').insert({
+        machine_id: machineId || null,
+        service_date: new Date().toISOString().split('T')[0],
+        description: formValues.ariza || formValues.yapilanBakim || formValues.islem || 'Bakım yapıldı',
+        duration_hours: formValues.sure ? parseFloat(formValues.sure) / 60 : null,
+        wo_id: woRow?.id || null,
+        technician_name: state.fullName
+      });
+    } catch (err) { console.warn('[ToolA] step3 service_history failed:', err); }
+
+    // ---- ADIM 4: learning_cases ----
+    try {
+      await supabase.from('learning_cases').insert({
+        alarm: alarmCode || null,
+        diagnosis: formValues.ariza || formValues.yapilanBakim || formValues.islem || 'Kapanış kaydı',
+        success: true,
+        usta: state.fullName,
+        bolge: state.region,
+        month: new Date().toISOString().substring(0, 7),
+        machine_id: machineId || null,
+        wo_id: woRow?.id || null,
+        created_by: state.userId,
+        discovered_by_name: state.fullName
+      });
+    } catch (err) { console.warn('[ToolA] step4 learning_cases failed:', err); }
+
+    // ---- ADIM 5: Score + badge ----
+    try {
+      newScore = (state.contributionScore || 0) + gain;
+      const newBadge = window.calculateBadge ? window.calculateBadge(newScore) : 'yeni';
+      await supabase.from('profiles')
+        .update({ contribution_score: newScore, badge: newBadge })
+        .eq('id', state.userId);
+      window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+      try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+    } catch (err) { console.warn('[ToolA] step5 score update failed:', err); }
+
+    // ---- ADIM 6: generate_pow_report ----
+    try {
+      if (woRow?.id) {
+        const { data } = await supabase.functions.invoke('generate_pow_report', {
+          body: { wo_id: woRow.id, user_id: state.userId }
+        });
+        reportUrl = data?.report_url || null;
+      }
+    } catch (err) { console.warn('[ToolA] step6 pow_report failed:', err); }
+
+    // ---- ADIM 7: Risk score ----
+    try {
+      if (machineId) {
+        const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+        const { count } = await supabase
+          .from('learning_cases')
+          .select('*', { count: 'exact', head: true })
+          .eq('machine_id', machineId)
+          .gte('created_at', since);
+        const c = count || 0;
+        const riskScore = c >= 5 ? Math.min(85, 50 + c * 5) : c >= 3 ? 45 : c >= 1 ? 25 : 10;
+        await supabase.from('machines')
+          .update({ risk_score: riskScore, risk_note: c + ' vaka son 90 günde' })
+          .eq('id', machineId);
+      }
+    } catch (err) { console.warn('[ToolA] step7 risk_score failed:', err); }
+
+    // ---- ADIM 8: Final modal ----
+    successSub.innerHTML =
+      'SAP ve Maximo\'ya gönderildi.<br>' +
+      '+' + gain + ' katkı puanı · Toplam: ' + newScore +
+      (reportUrl ? '<br><a href="' + reportUrl + '" target="_blank" style="color:var(--accent);text-decoration:underline;">Hizmet kanıtı raporu</a>' : '');
   }
   function closeSuccess() {
     document.getElementById('successModal').classList.remove('active');
