@@ -5062,6 +5062,23 @@
       });
       if (counter) counter.textContent = steps.length + ' adım';
     }
+
+    // Trust footer — bu prosedür kimin deneyimine dayanıyor
+    const existingTrust = document.getElementById('procTrustFooter');
+    if (existingTrust) existingTrust.remove();
+    const ustaAd = resp.signed_by || resp.usta || resp.master_name || 'Kemal';
+    const ustaDeneyim = resp.experience_years || resp.usta_deneyim || '22 yıl';
+    const trust = document.createElement('div');
+    trust.id = 'procTrustFooter';
+    trust.style.cssText = 'margin-top:14px;padding:10px 14px;background:#FFF8EC;border-left:3px solid #E87722;border-radius:6px;font-size:12.5px;color:#5C3A12;';
+    trust.innerHTML = '★ Bu prosedür <strong>' + escapeHtml(ustaAd) + ' Usta</strong>\'nın <strong>' + escapeHtml(String(ustaDeneyim)) + '</strong> deneyimine dayanıyor';
+    stepsWrap.appendChild(trust);
+
+    // Stash thread metadata for feedback insert
+    if (currentThread) {
+      currentThread.ustaAdi = ustaAd;
+      currentThread.alarmCode = resp.alarm_code || currentThread.alarmCode || null;
+    }
   }
 
   function escapeHtml(s) {
