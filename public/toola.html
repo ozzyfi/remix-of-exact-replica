@@ -5180,12 +5180,7 @@
     userEl.className = 'bubble-user';
     userEl.textContent = question;
     area.appendChild(userEl);
-
-    // Scroll to bottom
     scrollToBottom();
-
-    // Detect intent
-    const intent = detectIntent(question);
 
     // Show typing indicator
     const typing = document.createElement('div');
@@ -5194,12 +5189,33 @@
     area.appendChild(typing);
     scrollToBottom();
 
-    // Simulate thinking delay
-    await wait(800 + Math.random() * 600);
+    // Build history (last 6 turns)
+    const history = (currentThread?.messages || [])
+      .slice(-6)
+      .filter(m => m.role === 'user' || m.role === 'ai')
+      .map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }));
+
+    let response = null;
+    let hadError = false;
+    try {
+      response = await window.callDiagnose({
+        question,
+        history,
+        mode: 'info',
+        woId: currentThread?.woId || null
+      });
+    } catch (err) {
+      console.warn('[ToolA] followup diagnose failed:', err);
+      hadError = true;
+    }
     typing.remove();
 
-    // Generate and show response
-    const response = generateResponse(question, intent);
+    if (hadError || !response) {
+      // Fallback to local heuristic
+      const intent = detectIntent(question);
+      const fallback = generateResponse(question, intent);
+      response = { text: fallback.text, ref: fallback.ref || 'Çevrimdışı', type: fallback.type === 'resolution' ? 'resolution' : 'info' };
+    }
 
     if (response.type === 'resolution') {
       const contextLabel = document.createElement('div');
@@ -5209,17 +5225,24 @@
 
       const suggest = document.createElement('div');
       suggest.className = 'bubble-suggest';
-      suggest.innerHTML = `
-        <div class="suggest-text">${response.text}</div>
-      `;
+      suggest.innerHTML = `<div class="suggest-text">${escapeHtml(response.text || '')}</div>`;
       const btn = document.createElement('button');
       btn.className = 'suggest-btn';
       btn.textContent = 'Evet, kapat';
       btn.onclick = closeFromAnswer;
       suggest.appendChild(btn);
       area.appendChild(suggest);
+    } else if (response.type === 'raw') {
+      const contextLabel = document.createElement('div');
+      contextLabel.className = 'bubble-context';
+      contextLabel.innerHTML = '<span class="context-dot"></span> Bilgi · ' + currentTopicContext;
+      area.appendChild(contextLabel);
+      const ai = document.createElement('div');
+      ai.className = 'bubble-ai';
+      ai.textContent = response.text || 'Cevap alınamadı.';
+      area.appendChild(ai);
     } else {
-      // Info response
+      // Info / signed response
       const contextLabel = document.createElement('div');
       contextLabel.className = 'bubble-context';
       contextLabel.innerHTML = '<span class="context-dot"></span> Bilgi · ' + currentTopicContext;
@@ -5227,16 +5250,24 @@
 
       const ai = document.createElement('div');
       ai.className = 'bubble-ai';
-      ai.innerHTML = response.text + (response.ref ? `<span class="mini-ref">${response.ref}</span>` : '');
+      const text = response.text || response.answer || response.summary || '';
+      const ref = response.ref || (response.signed_by ? (response.signed_by + ' Usta') : '');
+      ai.innerHTML =
+        (text ? `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>` : '<p>Cevap alınamadı.</p>') +
+        (ref ? `<span class="mini-ref">${escapeHtml(ref)}</span>` : '');
       area.appendChild(ai);
 
-      // Save AI response to thread
       if (currentThread) {
-        currentThread.messages.push({ role: 'ai', text: response.text + (response.ref ? ' (' + response.ref + ')' : ''), ts: Date.now() });
+        currentThread.messages.push({
+          role: 'ai',
+          text: text + (response.signed_by ? ' — ' + response.signed_by + ' Usta' : ''),
+          ts: Date.now()
+        });
         currentThread.lastActiveAt = Date.now();
       }
     }
 
+    window.saveSessionTurn?.(currentThread, currentThread?.messages?.[currentThread.messages.length - 1]);
     scrollToBottom();
   }
 
