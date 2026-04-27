@@ -27,6 +27,7 @@ type AppContextValue = {
   appState: AppState;
   loading: boolean;
   refresh: () => Promise<void>;
+  patch: (p: Partial<AppState>) => void;
 };
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
