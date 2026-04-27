@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 
 const IframeBridge = () => {
-  const { appState } = useApp();
+  const { appState, patch } = useApp();
   const ref = useRef<HTMLIFrameElement>(null);
 
   // Push current app state into the iframe whenever it changes
@@ -15,13 +15,15 @@ const IframeBridge = () => {
     };
     send();
 
-    // Re-send when iframe asks for it (on its own load)
     const onMsg = (e: MessageEvent) => {
       if (e.data?.type === "TOOLA_REQUEST_STATE") send();
+      if (e.data?.type === "TOOLA_STATE_PATCH" && e.data.payload) {
+        patch(e.data.payload);
+      }
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, [appState]);
+  }, [appState, patch]);
 
   return (
     <iframe

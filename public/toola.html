@@ -2809,6 +2809,73 @@
       console.warn('[ToolA] saveSessionTurn failed:', err);
     }
   };
+
+  window.calculateBadge = function(score) {
+    if (score >= 300) return 'usta';
+    if (score >= 150) return 'uzman';
+    if (score >= 50) return 'deneyimli';
+    return 'yeni';
+  };
+
+  window.recordPositiveFeedback = async function(thread) {
+    const state = window.__APP_STATE__ || {};
+    const newScore = (state.contributionScore || 0) + 10;
+    const newBadge = window.calculateBadge(newScore);
+    window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+    try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+
+    if (state.isDemo || !state.userId) return { ok: true, demo: true, score: newScore };
+    try {
+      await supabase.from('learning_cases').insert({
+        alarm: thread?.alarmCode || null,
+        diagnosis: thread?.title || '',
+        success: true,
+        usta: thread?.ustaAdi || 'ToolA',
+        bolge: state.region,
+        month: new Date().toISOString().substring(0, 7),
+        machine_id: thread?.machineId || null,
+        wo_id: thread?.woId || null,
+        created_by: state.userId,
+        discovered_by_name: state.fullName
+      });
+      await supabase.from('profiles')
+        .update({ contribution_score: newScore, badge: newBadge })
+        .eq('id', state.userId);
+      return { ok: true, score: newScore };
+    } catch (err) {
+      console.warn('[ToolA] recordPositiveFeedback failed:', err);
+      return { ok: false, error: err };
+    }
+  };
+
+  window.recordNegativeFeedback = async function(thread) {
+    const state = window.__APP_STATE__ || {};
+    const newScore = (state.contributionScore || 0) + 5;
+    const newBadge = window.calculateBadge(newScore);
+    window.__APP_STATE__ = { ...state, contributionScore: newScore, badge: newBadge };
+    try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore, badge: newBadge } }, '*'); } catch {}
+
+    if (state.isDemo || !state.userId) return { ok: true, demo: true, score: newScore };
+    try {
+      await supabase.from('corrections').insert({
+        scene: thread?.title || '',
+        wrong: 'Teknisyen prosedürü reddetti',
+        correct: '',
+        lesson: '',
+        bolge: state.region,
+        usta: thread?.ustaAdi || 'ToolA',
+        wo_id: thread?.woId || null,
+        created_by: state.userId
+      });
+      await supabase.from('profiles')
+        .update({ contribution_score: newScore, badge: newBadge })
+        .eq('id', state.userId);
+      return { ok: true, score: newScore };
+    } catch (err) {
+      console.warn('[ToolA] recordNegativeFeedback failed:', err);
+      return { ok: false, error: err };
+    }
+  };
 </script>
 </head>
 <body>
@@ -4348,13 +4415,15 @@
     showToast(currentMachine.name + ' için iş bildirimi dispatcher\'a gönderildi');
   }
 
-  function openCorrectionWO() {
-    // Kapalı bir iş emrinde hata varsa düzeltme için yeni WO açılır
-    // Orijinal kayıt değişmez (immutable), yeni bir WO eski WO'ya referans verir
+  async function openCorrectionWO() {
     if (!currentThread) return;
     const originalWo = currentThread.woId;
-    showToast('Düzeltme iş emri açıldı · ' + originalWo + ' referans alındı');
-    // Yeni bir düzeltme WO'su aç (demo için)
+    showToast('Düzeltme iş emri açıldı · ' + (originalWo || '—') + ' referans alındı');
+    // Negatif feedback kaydı + score
+    try {
+      const res = await window.recordNegativeFeedback?.(currentThread);
+      if (res?.ok) showToast('Geri bildirim alındı · +5 katkı puanı');
+    } catch {}
     closeContext = {
       woId: 'WO-' + Math.floor(4500 + Math.random() * 100) + '-D',
       machine: currentThread.machine || 'BSF 36-4.16H',
@@ -4369,16 +4438,35 @@
     }, 1200);
   }
 
-  function sendFeedback(btn, positive) {
-    // Önce aynı row'daki tüm buton seçimlerini kaldır
+  async function sendFeedback(btn, positive) {
     const row = btn.closest('.feedback-row');
     row.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
 
     if (positive) {
-      showToast('Teşekkürler · ToolA öğreniyor');
+      try {
+        const res = await window.recordPositiveFeedback?.(currentThread);
+        if (res?.ok) {
+          showToast('Teşekkürler · ToolA öğreniyor · +10 katkı puanı');
+        } else {
+          showToast('Teşekkürler · ToolA öğreniyor');
+        }
+      } catch (err) {
+        console.warn('[ToolA] sendFeedback positive failed:', err);
+        showToast('Teşekkürler · ToolA öğreniyor');
+      }
     } else {
-      showToast('Geri bildirim alındı · bu prosedür iyileştirilecek');
+      try {
+        const res = await window.recordNegativeFeedback?.(currentThread);
+        if (res?.ok) {
+          showToast('Geri bildirim alındı · +5 katkı puanı');
+        } else {
+          showToast('Geri bildirim alındı · bu prosedür iyileştirilecek');
+        }
+      } catch (err) {
+        console.warn('[ToolA] sendFeedback negative failed:', err);
+        showToast('Geri bildirim alındı · bu prosedür iyileştirilecek');
+      }
     }
   }
 
@@ -4973,6 +5061,23 @@
         stepsWrap.appendChild(node);
       });
       if (counter) counter.textContent = steps.length + ' adım';
+    }
+
+    // Trust footer — bu prosedür kimin deneyimine dayanıyor
+    const existingTrust = document.getElementById('procTrustFooter');
+    if (existingTrust) existingTrust.remove();
+    const ustaAd = resp.signed_by || resp.usta || resp.master_name || 'Kemal';
+    const ustaDeneyim = resp.experience_years || resp.usta_deneyim || '22 yıl';
+    const trust = document.createElement('div');
+    trust.id = 'procTrustFooter';
+    trust.style.cssText = 'margin-top:14px;padding:10px 14px;background:#FFF8EC;border-left:3px solid #E87722;border-radius:6px;font-size:12.5px;color:#5C3A12;';
+    trust.innerHTML = '★ Bu prosedür <strong>' + escapeHtml(ustaAd) + ' Usta</strong>\'nın <strong>' + escapeHtml(String(ustaDeneyim)) + '</strong> deneyimine dayanıyor';
+    stepsWrap.appendChild(trust);
+
+    // Stash thread metadata for feedback insert
+    if (currentThread) {
+      currentThread.ustaAdi = ustaAd;
+      currentThread.alarmCode = resp.alarm_code || currentThread.alarmCode || null;
     }
   }
 
