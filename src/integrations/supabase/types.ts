@@ -175,6 +175,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           diagnosis: string | null
+          discovered_by_name: string | null
           id: string
           machine_id: string | null
           month: string | null
@@ -189,6 +190,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           diagnosis?: string | null
+          discovered_by_name?: string | null
           id?: string
           machine_id?: string | null
           month?: string | null
@@ -203,6 +205,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           diagnosis?: string | null
+          discovered_by_name?: string | null
           id?: string
           machine_id?: string | null
           month?: string | null
@@ -439,7 +442,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          badge: string | null
           client: string | null
+          contribution_score: number | null
           created_at: string
           full_name: string | null
           id: string
@@ -448,7 +453,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          badge?: string | null
           client?: string | null
+          contribution_score?: number | null
           created_at?: string
           full_name?: string | null
           id: string
@@ -457,7 +464,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          badge?: string | null
           client?: string | null
+          contribution_score?: number | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -520,8 +529,10 @@ export type Database = {
       }
       technicians: {
         Row: {
+          badge: string | null
           city: string | null
           client: string | null
+          contribution_score: number | null
           created_at: string
           experience_years: number | null
           full_name: string
@@ -530,8 +541,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          badge?: string | null
           city?: string | null
           client?: string | null
+          contribution_score?: number | null
           created_at?: string
           experience_years?: number | null
           full_name: string
@@ -540,8 +553,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          badge?: string | null
           city?: string | null
           client?: string | null
+          contribution_score?: number | null
           created_at?: string
           experience_years?: number | null
           full_name?: string
