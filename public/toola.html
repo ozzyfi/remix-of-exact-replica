@@ -245,6 +245,81 @@
     color: var(--accent);
   }
 
+  /* ===== CONTRIBUTION CARD ===== */
+  .contrib-card {
+    margin: 12px 20px 4px;
+    padding: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+  .contrib-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--bg-3);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+  .contrib-main { flex: 1; min-width: 0; }
+  .contrib-name {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .contrib-badge {
+    font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 100px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .contrib-badge.yeni { background: var(--bg-3); color: var(--text-2); }
+  .contrib-badge.deneyimli { background: #e2efff; color: #1d4ed8; }
+  .contrib-badge.uzman { background: #ffe9d1; color: #b35a00; }
+  .contrib-badge.usta { background: #d6ebd9; color: #0c5132; }
+  .contrib-meta { margin-top: 3px; font-size: 12px; color: var(--text-3); }
+  .contrib-score { text-align: right; flex-shrink: 0; }
+  .contrib-score-val {
+    font-size: 26px; font-weight: 800; color: var(--accent);
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .contrib-score-lbl {
+    font-size: 11px; color: var(--text-3); margin-top: 2px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  /* ===== SUPERVISOR PANEL ===== */
+  .sup-panel {
+    margin: 8px 20px 4px;
+    padding: 12px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .sup-panel-title {
+    font-size: 12px; font-weight: 700;
+    color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  .sup-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sup-stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .sup-stat-val {
+    font-size: 18px; font-weight: 800; color: var(--text);
+    letter-spacing: -0.01em; line-height: 1.1;
+  }
+  .sup-stat-lbl { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+
   /* ===== BÖLGEM (region) ===== */
   .region-header {
     padding: 16px 20px 8px;
