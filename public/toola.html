@@ -4758,10 +4758,9 @@
   }
 
   // Diagnosis
-  function startDiagnosis(q, woId = null) {
+  async function startDiagnosis(q, woId = null) {
     resetCaptures(); // yeni konuşma, yeni yakalamalar
 
-    // Create thread entry first (for both info and diagnostic paths)
     const newThread = {
       id: 'thr-' + Date.now(),
       title: q.length > 60 ? q.substring(0, 58) + '...' : q,
@@ -4773,54 +4772,67 @@
       lastActiveAt: Date.now()
     };
 
-    // If this is an info question (not a diagnostic one), show short answer
-    if (!isDiagnosticQuery(q) && !woId) {
-      // Info path — kısa cevap, prosedür yok
+    const isDiag = isDiagnosticQuery(q) || !!woId;
+
+    // ---------- INFO PATH ----------
+    if (!isDiag) {
       showScreen('answer');
       setTab(1);
-
       document.getElementById('answerQuestion').textContent = q;
-      document.getElementById('respTime').textContent = 'Bilgi cevabı';
+      document.getElementById('respTime').textContent = 'Hazırlanıyor...';
       document.getElementById('thinkingBox').style.display = 'none';
       document.getElementById('procBody').style.display = 'none';
-
-      // Show ask bar
       document.getElementById('followupArea').innerHTML = '';
       document.getElementById('askBar').classList.add('show');
       document.getElementById('readonlyBar').classList.remove('show');
       document.getElementById('closeWoFloat').classList.remove('show');
 
-      // Render info response as a bubble directly
       const area = document.getElementById('followupArea');
-      const infoKey = getInfoKey(q);
-      const info = infoKey ? INFO_RESPONSES[infoKey] : {
-        html: '<p>Bu soru için kılavuzda ve saha kayıtlarında bilgi var. Daha net bir soru sorarsan kaynağıyla cevaplayabilirim.</p>',
-        ref: 'Kılavuz'
-      };
-
       const ctx = document.createElement('div');
       ctx.className = 'bubble-context';
       ctx.innerHTML = '<span class="context-dot"></span> Bilgi · ' + extractContext(q);
       area.appendChild(ctx);
 
-      const ai = document.createElement('div');
-      ai.className = 'bubble-ai';
-      ai.style.maxWidth = '100%';
-      ai.innerHTML = info.html + '<span class="mini-ref">' + info.ref + '</span>';
-      area.appendChild(ai);
+      const typing = document.createElement('div');
+      typing.className = 'bubble-typing';
+      typing.innerHTML = '<span></span><span></span><span></span>';
+      area.appendChild(typing);
 
+      newThread.messages.push({ role: 'user', text: q, ts: Date.now() });
+      threads.unshift(newThread);
+      currentThread = newThread;
       currentTopic = q;
       currentTopicContext = extractContext(q);
 
-      // Add to thread
-      newThread.messages.push({ role: 'user', text: q, ts: Date.now() });
-      newThread.messages.push({ role: 'ai', text: info.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() + ' (' + info.ref + ')', ts: Date.now() });
-      threads.unshift(newThread);
-      currentThread = newThread;
+      const start = Date.now();
+      try {
+        const resp = await window.callDiagnose({ question: q, history: [], mode: 'info', woId });
+        typing.remove();
+        renderInfoResponse(area, resp);
+        document.getElementById('respTime').textContent =
+          Math.max(1, Math.round((Date.now() - start) / 1000)) + ' saniyede hazırlandı';
+      } catch (err) {
+        console.warn('[ToolA] diagnose info failed, fallback:', err);
+        typing.remove();
+        const infoKey = getInfoKey(q);
+        const info = infoKey ? INFO_RESPONSES[infoKey] : {
+          html: '<p>Bağlantı hatası — tekrar deneyin.</p>',
+          ref: 'Çevrimdışı'
+        };
+        const ai = document.createElement('div');
+        ai.className = 'bubble-ai';
+        ai.style.maxWidth = '100%';
+        ai.innerHTML = info.html + '<span class="mini-ref">' + info.ref + '</span>';
+        area.appendChild(ai);
+        newThread.messages.push({ role: 'ai', text: info.html.replace(/<[^>]+>/g, ' ').trim() + ' (' + info.ref + ')', ts: Date.now() });
+      }
+
+      window.saveSessionTurn?.(newThread, newThread.messages[newThread.messages.length - 1]);
+      scrollToBottom();
       return;
     }
 
-    // Diagnostic path — full procedure
+    // ---------- DIAGNOSTIC PATH ----------
     document.getElementById('answerQuestion').textContent = q;
     document.getElementById('respTime').textContent = 'Hazırlanıyor...';
     const thinking = document.getElementById('thinkingBox');
@@ -4845,35 +4857,129 @@
       }, d);
     });
 
-    setTimeout(() => {
-      document.getElementById('ts-5').classList.remove('active');
-      document.getElementById('ts-5').classList.add('done');
-      setTimeout(() => {
-        thinking.style.display = 'none';
-        body.style.display = 'block';
-        const sec = Math.round((Date.now() - start) / 1000);
-        document.getElementById('respTime').textContent = sec + ' saniyede hazırlandı';
+    newThread.messages.push({ role: 'user', text: q, ts: Date.now() });
+    threads.unshift(newThread);
+    currentThread = newThread;
+    currentTopic = q;
+    currentTopicContext = extractContext(q);
 
-        // Clear followup area and show ask bar
-        document.getElementById('followupArea').innerHTML = '';
-        document.getElementById('askBar').classList.add('show');
-        document.getElementById('readonlyBar').classList.remove('show');
-        if (woId || q.toLowerCase().includes('wo-')) {
-          document.getElementById('closeWoFloat').classList.add('show');
-        } else {
-          document.getElementById('closeWoFloat').classList.remove('show');
-        }
+    let resp = null, hadError = false;
+    try {
+      resp = await window.callDiagnose({ question: q, history: [], mode: 'diagnosis', woId });
+    } catch (err) {
+      console.warn('[ToolA] diagnose failed:', err);
+      hadError = true;
+    }
 
-        // Set current topic
-        currentTopic = q;
-        currentTopicContext = extractContext(q);
+    const elapsed = Date.now() - start;
+    if (elapsed < 3500) await new Promise(r => setTimeout(r, 3500 - elapsed));
 
-        // Add diagnosis marker to thread
-        newThread.messages.push({ role: 'system', type: 'diagnosis', question: q, ts: Date.now() });
-        threads.unshift(newThread);
-        currentThread = newThread;
-      }, 300);
-    }, 3500);
+    document.getElementById('ts-5').classList.remove('active');
+    document.getElementById('ts-5').classList.add('done');
+    await new Promise(r => setTimeout(r, 300));
+    thinking.style.display = 'none';
+    body.style.display = 'block';
+    const sec = Math.max(1, Math.round((Date.now() - start) / 1000));
+    document.getElementById('respTime').textContent = sec + ' saniyede hazırlandı';
+
+    document.getElementById('followupArea').innerHTML = '';
+    document.getElementById('askBar').classList.add('show');
+    document.getElementById('readonlyBar').classList.remove('show');
+    if (woId || q.toLowerCase().includes('wo-')) {
+      document.getElementById('closeWoFloat').classList.add('show');
+    } else {
+      document.getElementById('closeWoFloat').classList.remove('show');
+    }
+
+    if (hadError || !resp) {
+      const area = document.getElementById('followupArea');
+      const errEl = document.createElement('div');
+      errEl.className = 'bubble-ai';
+      errEl.innerHTML = '<p>Bağlantı hatası — tekrar deneyin.</p>';
+      area.appendChild(errEl);
+    } else {
+      renderDiagnosisResponse(resp);
+    }
+
+    newThread.messages.push({
+      role: 'ai',
+      type: 'diagnosis',
+      text: resp ? (resp.summary || resp.text || JSON.stringify(resp).slice(0, 200)) : 'Hata',
+      ts: Date.now()
+    });
+    window.saveSessionTurn?.(newThread, newThread.messages[newThread.messages.length - 1]);
+  }
+
+  // Render an info-type response into the followup area
+  function renderInfoResponse(area, resp) {
+    const ai = document.createElement('div');
+    ai.className = 'bubble-ai';
+    ai.style.maxWidth = '100%';
+    if (!resp) {
+      ai.innerHTML = '<p>Bağlantı hatası — tekrar deneyin.</p>';
+    } else if (resp.type === 'raw') {
+      ai.textContent = resp.text || 'Cevap alınamadı.';
+    } else {
+      const text = resp.text || resp.answer || resp.summary || '';
+      const ref = resp.ref || resp.source || (resp.signed_by ? (resp.signed_by + ' Usta') : '');
+      ai.innerHTML = (text ? `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>` : '<p>Cevap alınamadı.</p>') +
+        (ref ? `<span class="mini-ref">${escapeHtml(ref)}</span>` : '');
+    }
+    area.appendChild(ai);
+    if (currentThread) {
+      currentThread.messages.push({
+        role: 'ai',
+        text: (resp?.text || resp?.answer || resp?.summary || '') + (resp?.signed_by ? ' — ' + resp.signed_by + ' Usta' : ''),
+        ts: Date.now()
+      });
+    }
+  }
+
+  // Render a diagnosis-type response into the procedure body
+  function renderDiagnosisResponse(resp) {
+    const stepsWrap = document.querySelector('#procBody .steps-wrap');
+    if (!stepsWrap) return;
+    const header = stepsWrap.querySelector('.steps-header');
+    const counter = header?.querySelector('.steps-counter');
+    stepsWrap.querySelectorAll('.step').forEach(n => n.remove());
+
+    const steps = Array.isArray(resp.steps) ? resp.steps
+                : Array.isArray(resp.procedure) ? resp.procedure
+                : [];
+
+    if (steps.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'step';
+      empty.innerHTML = `<div class="step-num">!</div><div class="step-body">
+        <div class="step-text">${escapeHtml(resp.summary || resp.text || 'Adım üretilemedi.')}</div>
+        ${resp.signed_by ? `<div class="step-ref">${escapeHtml(resp.signed_by)} Usta</div>` : ''}
+      </div>`;
+      stepsWrap.appendChild(empty);
+    } else {
+      steps.forEach((s, idx) => {
+        const text = s.text || s.instruction || s.title || '';
+        const ref = s.ref || s.source || (s.time ? (s.time + ' dk') : '');
+        const expected = s.expected || s.beklenen || '';
+        const node = document.createElement('div');
+        node.className = 'step';
+        node.onclick = function() { this.classList.toggle('done'); };
+        node.innerHTML = `
+          <div class="step-num">${idx + 1}</div>
+          <div class="step-body">
+            <div class="step-text">${escapeHtml(text)}</div>
+            ${ref ? `<div class="step-ref">${escapeHtml(ref)}</div>` : ''}
+            ${expected ? `<div class="step-expected">Beklenen: ${escapeHtml(expected)}</div>` : ''}
+          </div>`;
+        stepsWrap.appendChild(node);
+      });
+      if (counter) counter.textContent = steps.length + ' adım';
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   // ===== CONVERSATION STATE =====
