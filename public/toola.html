@@ -3054,6 +3054,41 @@
         <div class="greeting-sub" id="greetingSub">Bugün 3 iş atandı.</div>
       </div>
 
+      <!-- CONTRIBUTION CARD -->
+      <div class="contrib-card" id="contribCard">
+        <div class="contrib-avatar" id="contribAvatar">M</div>
+        <div class="contrib-main">
+          <div class="contrib-name">
+            <span id="contribName">Mehmet</span>
+            <span class="contrib-badge yeni" id="contribBadge">yeni</span>
+          </div>
+          <div class="contrib-meta" id="contribMeta">— vaka · — düzeltme</div>
+        </div>
+        <div class="contrib-score">
+          <div class="contrib-score-val" id="contribScoreVal">0</div>
+          <div class="contrib-score-lbl">katkı</div>
+        </div>
+      </div>
+
+      <!-- SUPERVISOR PANEL (only role==='supervisor') -->
+      <div class="sup-panel" id="supPanel" style="display:none;">
+        <div class="sup-panel-title">Bölge analitiği</div>
+        <div class="sup-stats">
+          <div class="sup-stat">
+            <div class="sup-stat-val" id="supTopAlarm">—</div>
+            <div class="sup-stat-lbl">En çok alarm</div>
+          </div>
+          <div class="sup-stat">
+            <div class="sup-stat-val" id="supActiveSessions">0</div>
+            <div class="sup-stat-lbl">Aktif oturum</div>
+          </div>
+          <div class="sup-stat">
+            <div class="sup-stat-val" id="supLearnedRules">0</div>
+            <div class="sup-stat-lbl">Öğrenilen kural</div>
+          </div>
+        </div>
+      </div>
+
       <!-- HOME TABS -->
       <div class="home-tabs">
         <button class="home-tab active" id="homeTabJobs" onclick="switchHomeTab('jobs')">
