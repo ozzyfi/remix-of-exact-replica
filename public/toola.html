@@ -2774,7 +2774,34 @@
       }
     });
     if (error) throw error;
+
+    // Best-effort: increment applied_count for the correction rules we sent
+    if (!state.isDemo && corrections.length > 0) {
+      window.incrementAppliedCount?.(region, corrections).catch(() => {});
+    }
     return data;
+  };
+
+  // Bump applied_count for the correction rules used in this call
+  window.incrementAppliedCount = async function(region, usedCorrections) {
+    try {
+      const patterns = usedCorrections.map(c => c.scene_pattern).filter(Boolean);
+      if (!patterns.length) return;
+      const { data: rules } = await supabase
+        .from('correction_rules')
+        .select('id, applied_count, scene_pattern')
+        .eq('region', region)
+        .eq('is_active', true)
+        .in('scene_pattern', patterns);
+      if (!rules) return;
+      await Promise.all(rules.map(r =>
+        supabase.from('correction_rules')
+          .update({ applied_count: (r.applied_count || 0) + 1 })
+          .eq('id', r.id)
+      ));
+    } catch (err) {
+      console.warn('[ToolA] incrementAppliedCount failed:', err);
+    }
   };
 
   // Persist a diagnosis_sessions turn (best-effort, requires auth)
