@@ -3448,7 +3448,7 @@
           </div>
         </button>
 
-        <button class="job" onclick="notImplementedJob('BSA 1005')">
+        <button class="job" onclick="openJob()">
           <div class="job-head">
             <div class="job-name">BSA 1005 Sabit Pompa</div>
             <div class="job-badge active">Atandı</div>
@@ -3464,7 +3464,7 @@
           </div>
         </button>
 
-        <button class="job" onclick="notImplementedJob('BSF 42')">
+        <button class="job" onclick="openJob()">
           <div class="job-head">
             <div class="job-name">BSF 42-5.16H Bom Pompası</div>
             <div class="job-badge scheduled">Planlı</div>
@@ -3888,10 +3888,12 @@
         </div>
       </div>
 
-      <div class="bottom-bar">
-        <button class="btn btn-primary" onclick="startDiagnosis('BSF 36 · H-201 hidrolik basınç düşüklüğü', 'WO-4471')" style="flex: 1.5;">Teşhis başlat</button>
-        <button class="btn btn-secondary" onclick="goClose({from:'job', woId:'WO-4471', machine:'BSF 36-4.16H'})">İşi kapat</button>
-        <button class="btn btn-secondary" onclick="window.openEvidence({equipment:'BSF 36-4.16H', location:'Başakşehir, İstanbul', required:['photo','audio'], woId:'WO-4471', returnTo:'job'})">Kanıt Topla</button>
+      <div class="bottom-bar" style="flex-direction:column; gap:8px;">
+        <button class="btn btn-primary" style="width:100%" onclick="startDiagnosis('BSF 36 · H-201 hidrolik basınç düşüklüğü', 'WO-4471')">Teşhis Başlat</button>
+        <div style="display:flex; gap:8px; width:100%">
+          <button class="btn btn-secondary" style="flex:1" onclick="window.openEvidence({equipment:'BSF 36-4.16H', location:'Başakşehir, İstanbul', required:['photo','audio'], woId:'WO-4471', returnTo:'job'})">Kanıt Topla</button>
+          <button class="btn btn-secondary" style="flex:1" onclick="goClose({from:'job', woId:'WO-4471', machine:'BSF 36-4.16H'})">İşi Kapat</button>
+        </div>
       </div>
     </div>
 
