@@ -4384,6 +4384,111 @@
       </div>
     </div>
 
+    <!-- ===== EVIDENCE COLLECTION ===== -->
+    <div class="screen" id="s-evidence">
+      <div class="ev-header">
+        <button class="ev-back" onclick="evBack()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Geri
+        </button>
+        <div class="ev-title">Kanıt Topla</div>
+        <div class="ev-subtitle" id="evSubtitle">BSF 36-4.16H · Başakşehir, İstanbul</div>
+        <div class="ev-required-banner" id="evRequiredBanner">
+          <span>Gerekli:</span>
+          <span class="ev-required-icons" id="evRequiredIcons">📷 ⚠️ 📏</span>
+        </div>
+        <div class="ev-progress-wrap">
+          <span id="evProgressLabel">Adım 4 / 8</span>
+          <div class="ev-progress-track"><div class="ev-progress-fill" id="evProgressFill"></div></div>
+        </div>
+      </div>
+
+      <div class="ev-scroll">
+        <div class="ev-grid">
+          <div class="ev-card" id="evCard-photo" onclick="evTriggerFile('photo')">
+            <div class="ev-card-icon">📷</div>
+            <div class="ev-card-label">Fotoğraf</div>
+            <input type="file" id="evFile-photo" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'photo')">
+          </div>
+          <div class="ev-card" id="evCard-audio" onclick="evToggleAudio()">
+            <div class="ev-card-icon">🎙</div>
+            <div class="ev-card-label">Ses Kaydı</div>
+          </div>
+          <div class="ev-card" id="evCard-video" onclick="evTriggerFile('video')">
+            <div class="ev-card-icon">🎥</div>
+            <div class="ev-card-label">Video</div>
+            <input type="file" id="evFile-video" accept="video/*" capture="environment" style="display:none" onchange="evHandleFile(event,'video')">
+          </div>
+          <div class="ev-card" id="evCard-measure" onclick="evOpenSheet('measure')">
+            <div class="ev-card-icon">📏</div>
+            <div class="ev-card-label">Ölçüm</div>
+          </div>
+          <div class="ev-card" id="evCard-error" onclick="evOpenSheet('error')">
+            <div class="ev-card-icon">⚠️</div>
+            <div class="ev-card-label">Hata Kodu</div>
+          </div>
+          <div class="ev-card" id="evCard-note" onclick="evOpenSheet('note')">
+            <div class="ev-card-icon">📝</div>
+            <div class="ev-card-label">Not</div>
+          </div>
+        </div>
+
+        <div class="ev-preview-section">
+          <div class="ev-preview-title">Toplanan Kanıtlar</div>
+          <div class="ev-preview-strip" id="evPreviewStrip">
+            <div class="ev-empty">Henüz kanıt eklenmedi</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ev-cta-bar">
+        <button class="ev-cta-btn" id="evCtaBtn" onclick="evSubmit()" disabled>Teşhis Al →</button>
+      </div>
+
+      <div class="ev-sheet-backdrop" id="evSheetBackdrop" onclick="evCloseSheet()"></div>
+
+      <div class="ev-sheet" id="evSheet-measure">
+        <div class="ev-sheet-handle"></div>
+        <div class="ev-sheet-title">Ölçüm Ekle</div>
+        <div class="ev-sheet-row">
+          <input type="number" inputmode="decimal" class="ev-sheet-input" id="evMeasureValue" placeholder="Değer">
+          <select class="ev-unit-select" id="evMeasureUnit">
+            <option>bar</option><option>°C</option><option>dB</option><option>rpm</option><option>mm</option>
+          </select>
+        </div>
+        <div class="ev-sheet-actions">
+          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
+          <button class="ev-sheet-btn save" onclick="evSaveMeasure()">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="ev-sheet" id="evSheet-error">
+        <div class="ev-sheet-handle"></div>
+        <div class="ev-sheet-title">Hata Kodu Ekle</div>
+        <input type="text" class="ev-sheet-input" id="evErrorInput" placeholder="Örn: H-201, E-4521" autocomplete="off">
+        <div class="ev-sheet-actions">
+          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
+          <button class="ev-sheet-btn save" onclick="evSaveError()">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="ev-sheet" id="evSheet-note">
+        <div class="ev-sheet-handle"></div>
+        <div class="ev-sheet-title">Not Ekle</div>
+        <textarea class="ev-sheet-input" id="evNoteInput" maxlength="280" placeholder="Gözlemini yaz..."></textarea>
+        <div class="ev-sheet-char-count"><span id="evNoteCount">0</span> / 280</div>
+        <div class="ev-sheet-actions">
+          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
+          <button class="ev-sheet-btn save" onclick="evSaveNote()">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="ev-loading" id="evLoading">
+        <div class="ev-loading-spinner"></div>
+        <div class="ev-loading-text">ToolA analiz ediyor...</div>
+      </div>
+    </div>
+
     <!-- LISTEN OVERLAY -->
     <div class="listen-overlay" id="listenOverlay">
       <div class="listen-sheet">
