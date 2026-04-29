@@ -1316,6 +1316,34 @@
     color: white;
   }
 
+  /* Kanıt context bandı (s-answer) */
+  .ev-context-bar {
+    margin: 12px 16px;
+    padding: 10px 14px;
+    background: #F0F7E6;
+    border: 0.5px solid #C0DD97;
+    border-radius: 10px;
+  }
+  .ev-context-label {
+    font-size: 11px;
+    color: #3B6D11;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .ev-context-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .ev-ctx-chip {
+    font-size: 12px;
+    padding: 3px 10px;
+    background: #fff;
+    border: 0.5px solid #C0DD97;
+    border-radius: 20px;
+    color: #3B6D11;
+  }
+
   /* Safety - clear and visible */
   .safety {
     margin: 20px;
@@ -4068,6 +4096,10 @@
           <div class="think-dot"></div>
           <div>312 saha vakası eşleştiriliyor</div>
         </div>
+        <div class="think-step" id="ts-3b" style="display:none">
+          <div class="think-dot"></div>
+          <div>Saha kanıtları teşhise dahil ediliyor</div>
+        </div>
         <div class="think-step" id="ts-4">
           <div class="think-dot"></div>
           <div>Usta notları ve çelişkiler kontrol ediliyor</div>
@@ -4076,6 +4108,12 @@
           <div class="think-dot"></div>
           <div>Türkçe prosedür hazırlanıyor</div>
         </div>
+      </div>
+
+      <!-- Kanıt context bandı (sessionStorage'da kanıt varsa görünür) -->
+      <div class="ev-context-bar" id="evContextBar" style="display:none">
+        <div class="ev-context-label">Bu teşhis şu kanıtlara dayanıyor:</div>
+        <div class="ev-context-chips" id="evContextChips"></div>
       </div>
 
       <!-- Procedure -->
@@ -5646,6 +5684,7 @@
     if (!isDiag) {
       showScreen('answer');
       setTab(1);
+      if (typeof renderEvidenceContext === 'function') renderEvidenceContext();
       document.getElementById('answerQuestion').textContent = q;
       document.getElementById('respTime').textContent = 'Hazırlanıyor...';
       document.getElementById('thinkingBox').style.display = 'none';
@@ -5713,6 +5752,7 @@
 
     showScreen('answer');
     setTab(1);
+    if (typeof renderEvidenceContext === 'function') renderEvidenceContext();
 
     const start = Date.now();
     [0, 700, 1400, 2100, 2800].forEach((d, i) => {
@@ -6920,6 +6960,30 @@
     if (btn.disabled) return;
     if (evState.audioRecording) evStopAudio();
 
+    // Tip → {icon,label} eşleme
+    const evIconMap = {
+      photo:     { icon: '📷',  label: 'Fotoğraf' },
+      audio:     { icon: '🎙',  label: 'Ses kaydı' },
+      video:     { icon: '🎥',  label: 'Video' },
+      measure:   { icon: '📏',  label: 'Ölçüm' },
+      error:     { icon: '⚠️', label: 'Hata kodu' },
+      errorcode: { icon: '⚠️', label: 'Hata kodu' },
+      note:      { icon: '📝',  label: 'Not' }
+    };
+
+    // Toplanan kanıtları normalize et ve sessionStorage'a kaydet
+    const persisted = evState.items.map(it => {
+      const fallback = evIconMap[it.type] || { icon: '•', label: it.type || 'Kanıt' };
+      return {
+        type: it.type,
+        icon: it.icon || fallback.icon,
+        label: it.label || fallback.label
+      };
+    });
+    try {
+      sessionStorage.setItem('lastEvidence', JSON.stringify(persisted));
+    } catch (e) { /* sessionStorage erişim hatası — sessizce geç */ }
+
     // Try to route to existing diagnosis flow, otherwise show loading
     const summary = evState.items.map(i => i.label).join(' · ');
     const fullTitle = evState.title + ' — Kanıtlar: ' + summary;
@@ -6935,6 +6999,35 @@
       }, 1800);
     }
   }
+
+  // s-answer açılınca kanıt context bandını çiz
+  function renderEvidenceContext() {
+    const ev = sessionStorage.getItem('lastEvidence');
+    const bar = document.getElementById('evContextBar');
+    const chips = document.getElementById('evContextChips');
+    const extraStep = document.getElementById('ts-3b');
+    if (!bar || !chips) return;
+    if (!ev) {
+      bar.style.display = 'none';
+      if (extraStep) extraStep.style.display = 'none';
+      return;
+    }
+    let items = [];
+    try { items = JSON.parse(ev) || []; } catch (e) { items = []; }
+    if (items.length > 0) {
+      chips.innerHTML = items.map(item =>
+        '<span class="ev-ctx-chip">' +
+        (item.icon || '•') + ' ' + (item.label || '') +
+        '</span>'
+      ).join('');
+      bar.style.display = 'block';
+      if (extraStep) extraStep.style.display = '';
+    } else {
+      bar.style.display = 'none';
+      if (extraStep) extraStep.style.display = 'none';
+    }
+  }
+  window.renderEvidenceContext = renderEvidenceContext;
 
   // Expose for inline onclick
   window.openEvidence = openEvidence;
