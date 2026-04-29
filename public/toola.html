@@ -3576,7 +3576,7 @@
 
       <!-- JOBS TAB -->
       <div id="home-jobs">
-        <button class="job" onclick="openJob({name:'BSF 36-4.16H Bom Pompası', loc:'Başakşehir, İstanbul', wo:'WO-4471', code:'H-201', complaint:'Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.', priority:'high', required:['photo','audio']})">
+        <button class="job" onclick="openJob({name:'BSF 36-4.16H Bom Pompası', loc:'Başakşehir, İstanbul', wo:'WO-4471', code:'H-201', complaint:'Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.', priority:'high', required:['photo','audio'], parts:[{name:'Hidrolik pompa', code:'HP-4420', stock:'3 stokta', prob:68},{name:'Basınç regülasyon valfi', code:'PV-1180', stock:'7 stokta', prob:18},{name:'Hidrolik yağ filtresi', code:'HF-0330', stock:'24 stokta', prob:10},{name:'Hidrolik hortum seti', code:'HS-0055', stock:'Sipariş bekleniyor', prob:4}]})">
           <div class="job-head">
             <div class="job-name">BSF 36-4.16H Bom Pompası</div>
             <div class="job-badge urgent">Devam</div>
@@ -3592,7 +3592,7 @@
           </div>
         </button>
 
-        <button class="job" onclick="openJob({name:'BSA 1005 Sabit Pompa', loc:'Çankaya, Ankara', wo:'WO-4467', code:'P-105', complaint:'Pompalama hattı tıkanması. S-valf ve aşınma plakası kontrol edilecek.', priority:'normal', required:['photo','measurement']})">
+        <button class="job" onclick="openJob({name:'BSA 1005 Sabit Pompa', loc:'Çankaya, Ankara', wo:'WO-4467', code:'P-105', complaint:'Pompalama hattı tıkanması. S-valf ve aşınma plakası kontrol edilecek.', priority:'normal', required:['photo','measurement'], parts:[{name:'S-valf', code:'SV-2201', stock:'5 stokta', prob:72},{name:'Aşınma plakası', code:'AP-0441', stock:'2 stokta', prob:21},{name:'Pompa contası seti', code:'PC-1105', stock:'8 stokta', prob:7}]})">
           <div class="job-head">
             <div class="job-name">BSA 1005 Sabit Pompa</div>
             <div class="job-badge active">Atandı</div>
@@ -3608,7 +3608,7 @@
           </div>
         </button>
 
-        <button class="job" onclick="openJob({name:'BSF 42-5.16H Bom Pompası', loc:'Konak, İzmir', wo:'WO-4462', code:'B-310', complaint:'3. bom kolu hareket kısıtlaması. Silindir contası ve pim kontrolü yapılacak.', priority:'low', required:['photo','video']})">
+        <button class="job" onclick="openJob({name:'BSF 42-5.16H Bom Pompası', loc:'Konak, İzmir', wo:'WO-4462', code:'B-310', complaint:'3. bom kolu hareket kısıtlaması. Silindir contası ve pim kontrolü yapılacak.', priority:'low', required:['photo','video'], parts:[{name:'Silindir contası', code:'SC-3310', stock:'4 stokta', prob:65},{name:'Pim ve yataklama seti', code:'PY-0220', stock:'1 stokta', prob:28},{name:'Bom kolu burcu', code:'BK-0115', stock:'Sipariş bekleniyor', prob:7}]})">
           <div class="job-head">
             <div class="job-name">BSF 42-5.16H Bom Pompası</div>
             <div class="job-badge scheduled">Planlı</div>
@@ -3963,51 +3963,11 @@
 
       <div class="section">
         <div class="section-title">Yanına al</div>
-        <div class="section-sub">312 vakaya göre hazırlanmış parça listesi</div>
+        <div class="section-sub" id="jobPartsCount">312 vakaya göre hazırlanmış parça listesi</div>
         <div style="font-size:12px; color:var(--text-3); padding: 8px 0;">Parçaları aldıktan sonra "Kanıt Topla" ile sahada belgelemeye başla.</div>
 
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Hidrolik pompa</div>
-            <div class="part-meta">HP-4420 · 3 stokta</div>
-          </div>
-          <div class="part-prob">68%</div>
-        </div>
-
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Basınç regülasyon valfi</div>
-            <div class="part-meta">PV-1180 · 7 stokta</div>
-          </div>
-          <div class="part-prob low">18%</div>
-        </div>
-
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Hidrolik yağ filtresi</div>
-            <div class="part-meta">HF-0330 · 24 stokta</div>
-          </div>
-          <div class="part-prob low">10%</div>
-        </div>
-
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Hidrolik hortum seti</div>
-            <div class="part-meta" style="color: var(--danger);">HS-0055 · Sipariş bekleniyor</div>
-          </div>
-          <div class="part-prob low">4%</div>
+        <div id="jobPartsList">
+          <!-- Dinamik olarak dolacak -->
         </div>
       </div>
 
@@ -5031,6 +4991,32 @@
     const pEl = document.getElementById('jobDetailPriority');
     if (pEl) { pEl.textContent = p.label; pEl.style.color = p.color; }
     set('jobDetailComplaint', j.complaint);
+
+    // Dinamik parça listesi
+    const partsContainer = document.getElementById('jobPartsList');
+    if (partsContainer && j.parts) {
+      partsContainer.innerHTML = j.parts.map(p => {
+        const isLow = p.stock.includes('Sipariş');
+        const probClass = p.prob >= 50 ? '' : 'low';
+        return '<div class="part" onclick="toggleCheck(this)">' +
+          '<div class="part-check">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">' +
+              '<polyline points="20 6 9 17 4 12"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="part-body">' +
+            '<div class="part-name">' + p.name + '</div>' +
+            '<div class="part-meta" ' + (isLow ? 'style="color:var(--danger)"' : '') + '>' +
+              p.code + ' · ' + p.stock +
+            '</div>' +
+          '</div>' +
+          '<div class="part-prob ' + probClass + '">' + p.prob + '%</div>' +
+        '</div>';
+      }).join('');
+    }
+    const countEl = document.getElementById('jobPartsCount');
+    if (countEl) countEl.textContent = (j.parts ? j.parts.length : 0) + ' parça · geçmiş vakalara göre sıralandı';
+
     showScreen('job'); setTab(0);
   }
   function jobStartDiag() {
