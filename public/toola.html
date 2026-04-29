@@ -5723,6 +5723,7 @@
 
     showScreen('answer');
     setTab(1);
+    if (typeof renderEvidenceContext === 'function') renderEvidenceContext();
 
     const start = Date.now();
     [0, 700, 1400, 2100, 2800].forEach((d, i) => {
