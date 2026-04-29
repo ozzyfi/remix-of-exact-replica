@@ -704,6 +704,24 @@
     gap: 12px;
   }
   .job-footer .job-ref { margin: 0; }
+  .src-chip {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .src-whatsapp {
+    background: #FFF0EB; color: #993C1D;
+    border: 0.5px solid #F7C4AE;
+  }
+  .src-panel {
+    background: #E6F1FB; color: #0C447C;
+    border: 0.5px solid #B5D4F4;
+  }
+  .src-operator {
+    background: #F1EFE8; color: #444441;
+    border: 0.5px solid #E0DDD4;
+  }
   .job-evidence-btn {
     display: inline-flex;
     align-items: center;
@@ -3566,7 +3584,7 @@
           <div class="job-loc">Başakşehir, İstanbul</div>
           <div class="job-desc">Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.</div>
           <div class="job-footer">
-            <div class="job-ref">WO-4471 · H-201</div>
+            <div class="job-ref">WO-4471 · H-201 <span class="src-chip src-whatsapp">📱 WhatsApp</span></div>
             <span class="job-evidence-btn" role="button" tabindex="0"
               onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSF 36-4.16H Bom Pompası', location: 'Başakşehir, İstanbul', required: ['photo','audio'], woId: 'WO-4471', returnTo: 'job' });">
               Kanıt Topla →
@@ -3582,7 +3600,7 @@
           <div class="job-loc">Çankaya, Ankara</div>
           <div class="job-desc">Pompalama hattı tıkanması. S-valf ve aşınma plakası kontrol edilecek.</div>
           <div class="job-footer">
-            <div class="job-ref">WO-4467 · P-105</div>
+            <div class="job-ref">WO-4467 · P-105 <span class="src-chip src-panel">🖥 Panel</span></div>
             <span class="job-evidence-btn" role="button" tabindex="0"
               onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSA 1005 Sabit Pompa', location: 'Çankaya, Ankara', required: ['photo','measurement'], woId: 'WO-4467', returnTo: 'job' });">
               Kanıt Topla →
@@ -3598,7 +3616,7 @@
           <div class="job-loc">Konak, İzmir</div>
           <div class="job-desc">3. bom kolu hareket kısıtlaması. Silindir contası ve pim kontrolü yapılacak.</div>
           <div class="job-footer">
-            <div class="job-ref">WO-4462 · B-310</div>
+            <div class="job-ref">WO-4462 · B-310 <span class="src-chip src-operator">📋 Operatör</span></div>
             <span class="job-evidence-btn" role="button" tabindex="0"
               onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSF 42-5.16H Bom Pompası', location: 'Konak, İzmir', required: ['photo','video'], woId: 'WO-4462', returnTo: 'job' });">
               Kanıt Topla →
