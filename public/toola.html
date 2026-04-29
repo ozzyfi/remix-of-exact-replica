@@ -2838,7 +2838,7 @@
   }
   .ev-progress-fill {
     height: 100%; background: #E85D2F; border-radius: 2px;
-    width: 50%; transition: width 0.3s ease;
+    width: 0%; transition: width 0.3s ease;
   }
 
   .ev-scroll { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 100px; }
@@ -3820,6 +3820,7 @@
       <div class="section">
         <div class="section-title">Yanına al</div>
         <div class="section-sub">312 vakaya göre hazırlanmış parça listesi</div>
+        <div style="font-size:12px; color:var(--text-3); padding: 8px 0;">Parçaları aldıktan sonra "Kanıt Topla" ile sahada belgelemeye başla.</div>
 
         <div class="part" onclick="toggleCheck(this)">
           <div class="part-check">
@@ -3890,6 +3891,7 @@
       <div class="bottom-bar">
         <button class="btn btn-primary" onclick="startDiagnosis('BSF 36 · H-201 hidrolik basınç düşüklüğü', 'WO-4471')" style="flex: 1.5;">Teşhis başlat</button>
         <button class="btn btn-secondary" onclick="goClose({from:'job', woId:'WO-4471', machine:'BSF 36-4.16H'})">İşi kapat</button>
+        <button class="btn btn-secondary" onclick="window.openEvidence({equipment:'BSF 36-4.16H', location:'Başakşehir, İstanbul', required:['photo','audio'], woId:'WO-4471', returnTo:'job'})">Kanıt Topla</button>
       </div>
     </div>
 
@@ -6680,10 +6682,10 @@
 
     // Try to route to existing diagnosis flow, otherwise show loading
     const summary = evState.items.map(i => i.label).join(' · ');
-    const title = evState.title + (summary ? ' — ' + summary : '');
+    const fullTitle = evState.title + ' — Kanıtlar: ' + summary;
 
     if (typeof startDiagnosis === 'function') {
-      startDiagnosis(title, evState.woId || null);
+      startDiagnosis(fullTitle, evState.woId || null);
     } else {
       const loading = document.getElementById('evLoading');
       loading.classList.add('show');
