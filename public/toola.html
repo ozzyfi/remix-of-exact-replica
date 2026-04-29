@@ -6401,6 +6401,269 @@
     goHome();
   }
 
+  // ===== Evidence Collection Screen =====
+  const evState = {
+    items: [],          // {id, type, label, value, thumb}
+    required: ['photo','error','measure'],
+    returnTo: 'job',
+    equipment: 'BSF 36-4.16H',
+    location: 'Başakşehir, İstanbul',
+    title: '',
+    woId: null,
+    audioRecording: false,
+    audioTimer: null,
+    audioStart: 0,
+  };
+
+  function openEvidence(opts = {}) {
+    evState.items = [];
+    evState.required = opts.required || ['photo','error','measure'];
+    evState.returnTo = opts.returnTo || 'job';
+    evState.equipment = opts.equipment || 'BSF 36-4.16H';
+    evState.location = opts.location || 'Başakşehir, İstanbul';
+    evState.title = opts.title || (evState.equipment + ' arızası');
+    evState.woId = opts.woId || null;
+
+    document.getElementById('evSubtitle').textContent =
+      evState.equipment + ' · ' + evState.location;
+
+    const iconMap = { photo:'📷', audio:'🎙', video:'🎥', measure:'📏', error:'⚠️', note:'📝' };
+    document.getElementById('evRequiredIcons').textContent =
+      evState.required.map(r => iconMap[r] || '•').join(' ');
+
+    // Reset cards
+    ['photo','audio','video','measure','error','note'].forEach(t => {
+      const c = document.getElementById('evCard-' + t);
+      if (c) {
+        c.classList.remove('done','active','recording');
+        const lbl = c.querySelector('.ev-card-label');
+        const orig = { photo:'Fotoğraf', audio:'Ses Kaydı', video:'Video', measure:'Ölçüm', error:'Hata Kodu', note:'Not' }[t];
+        if (lbl) lbl.textContent = orig;
+        c.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
+      }
+    });
+
+    evRender();
+    showScreen('evidence');
+  }
+
+  function evBack() {
+    if (evState.audioRecording) evStopAudio();
+    if (evState.returnTo === 'job') showScreen('job');
+    else if (evState.returnTo === 'home') goHome();
+    else showScreen(evState.returnTo);
+  }
+
+  function evRender() {
+    // Preview strip
+    const strip = document.getElementById('evPreviewStrip');
+    if (!evState.items.length) {
+      strip.innerHTML = '<div class="ev-empty">Henüz kanıt eklenmedi</div>';
+    } else {
+      strip.innerHTML = evState.items.map(it => {
+        if (it.type === 'photo' && it.thumb) {
+          return `<div class="ev-chip photo" data-id="${it.id}">
+            <img src="${it.thumb}" alt="">
+            <button class="ev-chip-x" onclick="evRemove('${it.id}')">×</button></div>`;
+        }
+        const cls = it.type === 'error' ? 'error' : (it.type === 'measure' ? 'measure' : '');
+        return `<div class="ev-chip ${cls}" data-id="${it.id}">
+          <span class="ev-chip-text">${it.label}</span>
+          <button class="ev-chip-x" onclick="evRemove('${it.id}')">×</button></div>`;
+      }).join('');
+    }
+
+    // Required banner
+    const haveTypes = new Set(evState.items.map(i => i.type));
+    const allRequired = evState.required.every(r => haveTypes.has(r));
+    document.getElementById('evRequiredBanner').classList.toggle('complete', allRequired);
+
+    // Progress
+    const total = 8;
+    const done = Math.min(evState.items.length, total);
+    document.getElementById('evProgressLabel').textContent = `Adım ${done} / ${total}`;
+    document.getElementById('evProgressFill').style.width = ((done/total)*100) + '%';
+
+    // CTA
+    const btn = document.getElementById('evCtaBtn');
+    if (allRequired) {
+      btn.classList.add('ready');
+      btn.disabled = false;
+      btn.textContent = `Teşhis Al → (${evState.items.length} kanıt)`;
+    } else {
+      btn.classList.remove('ready');
+      btn.disabled = true;
+      btn.textContent = 'Teşhis Al →';
+    }
+
+    // Card done states
+    ['photo','audio','video','measure','error','note'].forEach(t => {
+      const card = document.getElementById('evCard-' + t);
+      if (!card) return;
+      const has = haveTypes.has(t);
+      card.classList.toggle('done', has);
+    });
+  }
+
+  function evAdd(item) {
+    item.id = 'ev-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+    evState.items.push(item);
+    evRender();
+  }
+
+  function evRemove(id) {
+    evState.items = evState.items.filter(i => i.id !== id);
+    evRender();
+  }
+
+  function evTriggerFile(type) {
+    const inp = document.getElementById('evFile-' + type);
+    if (inp) inp.click();
+  }
+
+  function evHandleFile(e, type) {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (type === 'photo') {
+      const url = URL.createObjectURL(f);
+      evAdd({ type:'photo', label:'Fotoğraf', thumb:url });
+    } else {
+      evAdd({ type:'video', label:'🎥 Video (' + Math.round(f.size/1024) + ' KB)' });
+    }
+    e.target.value = '';
+  }
+
+  function evToggleAudio() {
+    if (evState.audioRecording) {
+      evStopAudio();
+    } else {
+      evStartAudio();
+    }
+  }
+
+  function evStartAudio() {
+    evState.audioRecording = true;
+    evState.audioStart = Date.now();
+    const card = document.getElementById('evCard-audio');
+    card.classList.add('active','recording');
+
+    const dot = document.createElement('div');
+    dot.className = 'ev-rec-dot';
+    card.appendChild(dot);
+
+    const wave = document.createElement('div');
+    wave.className = 'ev-wave';
+    wave.innerHTML = '<div class="ev-wave-bar"></div>'.repeat(6);
+    const lbl = card.querySelector('.ev-card-label');
+    lbl.textContent = 'Kaydediliyor...';
+    card.insertBefore(wave, lbl.nextSibling);
+
+    const timer = document.createElement('div');
+    timer.className = 'ev-rec-timer';
+    timer.textContent = '00:00';
+    card.appendChild(timer);
+
+    evState.audioTimer = setInterval(() => {
+      const sec = Math.floor((Date.now() - evState.audioStart) / 1000);
+      const mm = String(Math.floor(sec/60)).padStart(2,'0');
+      const ss = String(sec%60).padStart(2,'0');
+      timer.textContent = mm + ':' + ss;
+      if (sec >= 30) evStopAudio();
+    }, 250);
+  }
+
+  function evStopAudio() {
+    if (!evState.audioRecording) return;
+    const sec = Math.min(30, Math.floor((Date.now() - evState.audioStart) / 1000));
+    clearInterval(evState.audioTimer);
+    evState.audioRecording = false;
+    const card = document.getElementById('evCard-audio');
+    card.classList.remove('active','recording');
+    card.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
+    const lbl = card.querySelector('.ev-card-label');
+    lbl.textContent = 'Ses Kaydı';
+    const dur = Math.max(1, sec);
+    evAdd({ type:'audio', label:`🎙 ${dur}s ses kaydı` });
+  }
+
+  // Bottom sheets
+  function evOpenSheet(kind) {
+    document.getElementById('evSheetBackdrop').classList.add('show');
+    document.getElementById('evSheet-' + kind).classList.add('show');
+    if (kind === 'measure') setTimeout(() => document.getElementById('evMeasureValue').focus(), 200);
+    if (kind === 'error') setTimeout(() => document.getElementById('evErrorInput').focus(), 200);
+    if (kind === 'note') setTimeout(() => document.getElementById('evNoteInput').focus(), 200);
+  }
+  function evCloseSheet() {
+    document.getElementById('evSheetBackdrop').classList.remove('show');
+    ['measure','error','note'].forEach(k => document.getElementById('evSheet-' + k).classList.remove('show'));
+  }
+  function evSaveMeasure() {
+    const v = document.getElementById('evMeasureValue').value.trim();
+    const u = document.getElementById('evMeasureUnit').value;
+    if (!v) return;
+    evAdd({ type:'measure', label: v + ' ' + u });
+    document.getElementById('evMeasureValue').value = '';
+    evCloseSheet();
+  }
+  function evSaveError() {
+    const v = document.getElementById('evErrorInput').value.trim();
+    if (!v) return;
+    evAdd({ type:'error', label: '⚠️ ' + v });
+    document.getElementById('evErrorInput').value = '';
+    evCloseSheet();
+  }
+  function evSaveNote() {
+    const v = document.getElementById('evNoteInput').value.trim();
+    if (!v) return;
+    const short = v.length > 40 ? v.slice(0,40) + '…' : v;
+    evAdd({ type:'note', label: '📝 ' + short });
+    document.getElementById('evNoteInput').value = '';
+    document.getElementById('evNoteCount').textContent = '0';
+    evCloseSheet();
+  }
+
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'evNoteInput') {
+      document.getElementById('evNoteCount').textContent = e.target.value.length;
+    }
+  });
+
+  function evSubmit() {
+    const btn = document.getElementById('evCtaBtn');
+    if (btn.disabled) return;
+    if (evState.audioRecording) evStopAudio();
+
+    // Try to route to existing diagnosis flow, otherwise show loading
+    const summary = evState.items.map(i => i.label).join(' · ');
+    const title = evState.title + (summary ? ' — ' + summary : '');
+
+    if (typeof startDiagnosis === 'function') {
+      startDiagnosis(title, evState.woId || null);
+    } else {
+      const loading = document.getElementById('evLoading');
+      loading.classList.add('show');
+      setTimeout(() => {
+        loading.classList.remove('show');
+        if (typeof showScreen === 'function') showScreen('answer');
+      }, 1800);
+    }
+  }
+
+  // Expose for inline onclick
+  window.openEvidence = openEvidence;
+  window.evBack = evBack;
+  window.evTriggerFile = evTriggerFile;
+  window.evHandleFile = evHandleFile;
+  window.evToggleAudio = evToggleAudio;
+  window.evOpenSheet = evOpenSheet;
+  window.evCloseSheet = evCloseSheet;
+  window.evSaveMeasure = evSaveMeasure;
+  window.evSaveError = evSaveError;
+  window.evSaveNote = evSaveNote;
+  window.evRemove = evRemove;
+  window.evSubmit = evSubmit;
+
   document.addEventListener('gesturestart', e => e.preventDefault());
 </script>
 
