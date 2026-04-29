@@ -3432,7 +3432,7 @@
 
       <!-- JOBS TAB -->
       <div id="home-jobs">
-        <button class="job" onclick="openJob()">
+        <button class="job" onclick="openJob({name:'BSF 36-4.16H Bom Pompası', loc:'Başakşehir, İstanbul', wo:'WO-4471', code:'H-201', complaint:'Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.', priority:'high', required:['photo','audio']})">
           <div class="job-head">
             <div class="job-name">BSF 36-4.16H Bom Pompası</div>
             <div class="job-badge urgent">Devam</div>
@@ -3448,7 +3448,7 @@
           </div>
         </button>
 
-        <button class="job" onclick="openJob()">
+        <button class="job" onclick="openJob({name:'BSA 1005 Sabit Pompa', loc:'Çankaya, Ankara', wo:'WO-4467', code:'P-105', complaint:'Pompalama hattı tıkanması. S-valf ve aşınma plakası kontrol edilecek.', priority:'normal', required:['photo','measurement']})">
           <div class="job-head">
             <div class="job-name">BSA 1005 Sabit Pompa</div>
             <div class="job-badge active">Atandı</div>
@@ -3464,7 +3464,7 @@
           </div>
         </button>
 
-        <button class="job" onclick="openJob()">
+        <button class="job" onclick="openJob({name:'BSF 42-5.16H Bom Pompası', loc:'Konak, İzmir', wo:'WO-4462', code:'B-310', complaint:'3. bom kolu hareket kısıtlaması. Silindir contası ve pim kontrolü yapılacak.', priority:'low', required:['photo','video']})">
           <div class="job-head">
             <div class="job-name">BSF 42-5.16H Bom Pompası</div>
             <div class="job-badge scheduled">Planlı</div>
@@ -3802,17 +3802,17 @@
       </button>
 
       <div class="detail-top">
-        <div class="detail-name">BSF 36-4.16H Bom Pompası</div>
-        <div class="detail-info">
-          <span>WO-4471</span>
+        <div class="detail-name" id="jobDetailName">BSF 36-4.16H Bom Pompası</div>
+        <div class="detail-info" id="jobDetailInfo">
+          <span id="jobDetailWo">WO-4471</span>
           <span class="dot"></span>
-          <span>H-201</span>
+          <span id="jobDetailCode">H-201</span>
           <span class="dot"></span>
-          <span>Başakşehir, İstanbul</span>
+          <span id="jobDetailLoc">Başakşehir, İstanbul</span>
           <span class="dot"></span>
-          <span style="color: var(--danger); font-weight: 600;">Yüksek öncelik</span>
+          <span id="jobDetailPriority" style="color: var(--danger); font-weight: 600;">Yüksek öncelik</span>
         </div>
-        <div class="detail-complaint">
+        <div class="detail-complaint" id="jobDetailComplaint">
           Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.
         </div>
       </div>
@@ -3889,10 +3889,10 @@
       </div>
 
       <div class="bottom-bar" style="flex-direction:column; gap:8px;">
-        <button class="btn btn-primary" style="width:100%" onclick="startDiagnosis('BSF 36 · H-201 hidrolik basınç düşüklüğü', 'WO-4471')">Teşhis Başlat</button>
+        <button class="btn btn-primary" id="jobBtnDiag" style="width:100%" onclick="jobStartDiag()">Teşhis Başlat</button>
         <div style="display:flex; gap:8px; width:100%">
-          <button class="btn btn-secondary" style="flex:1" onclick="window.openEvidence({equipment:'BSF 36-4.16H', location:'Başakşehir, İstanbul', required:['photo','audio'], woId:'WO-4471', returnTo:'job'})">Kanıt Topla</button>
-          <button class="btn btn-secondary" style="flex:1" onclick="goClose({from:'job', woId:'WO-4471', machine:'BSF 36-4.16H'})">İşi Kapat</button>
+          <button class="btn btn-secondary" id="jobBtnEvidence" style="flex:1" onclick="jobOpenEvidence()">Kanıt Topla</button>
+          <button class="btn btn-secondary" id="jobBtnClose" style="flex:1" onclick="jobGoClose()">İşi Kapat</button>
         </div>
       </div>
     </div>
@@ -4863,7 +4863,34 @@
     document.getElementById('aiFailurePanel').style.display = 'none';
     capturedFailures = [];
   }
-  function openJob() { showScreen('job'); setTab(0); }
+  let currentJob = { name:'BSF 36-4.16H Bom Pompası', loc:'Başakşehir, İstanbul', wo:'WO-4471', code:'H-201', complaint:'Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.', priority:'high', required:['photo','audio'] };
+  function openJob(data) {
+    if (data && typeof data === 'object') currentJob = Object.assign({}, currentJob, data);
+    const j = currentJob;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('jobDetailName', j.name);
+    set('jobDetailWo', j.wo);
+    set('jobDetailCode', j.code || '');
+    set('jobDetailLoc', j.loc);
+    const pMap = { high:{ label:'Yüksek öncelik', color:'var(--danger)' }, normal:{ label:'Normal öncelik', color:'var(--text-2)' }, low:{ label:'Düşük öncelik', color:'var(--text-3)' } };
+    const p = pMap[j.priority] || pMap.normal;
+    const pEl = document.getElementById('jobDetailPriority');
+    if (pEl) { pEl.textContent = p.label; pEl.style.color = p.color; }
+    set('jobDetailComplaint', j.complaint);
+    showScreen('job'); setTab(0);
+  }
+  function jobStartDiag() {
+    const j = currentJob;
+    startDiagnosis(j.name + ' · ' + (j.code || '') + ' ' + j.complaint, j.wo);
+  }
+  function jobOpenEvidence() {
+    const j = currentJob;
+    window.openEvidence({ equipment: j.name, location: j.loc, required: j.required || ['photo'], woId: j.wo, returnTo: 'job' });
+  }
+  function jobGoClose() {
+    const j = currentJob;
+    goClose({ from:'job', woId: j.wo, machine: j.name });
+  }
 
   // Show a quick toast message
   let toastTimeout;
