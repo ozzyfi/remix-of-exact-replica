@@ -3963,51 +3963,11 @@
 
       <div class="section">
         <div class="section-title">Yanına al</div>
-        <div class="section-sub">312 vakaya göre hazırlanmış parça listesi</div>
+        <div class="section-sub" id="jobPartsCount">312 vakaya göre hazırlanmış parça listesi</div>
         <div style="font-size:12px; color:var(--text-3); padding: 8px 0;">Parçaları aldıktan sonra "Kanıt Topla" ile sahada belgelemeye başla.</div>
 
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Hidrolik pompa</div>
-            <div class="part-meta">HP-4420 · 3 stokta</div>
-          </div>
-          <div class="part-prob">68%</div>
-        </div>
-
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Basınç regülasyon valfi</div>
-            <div class="part-meta">PV-1180 · 7 stokta</div>
-          </div>
-          <div class="part-prob low">18%</div>
-        </div>
-
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Hidrolik yağ filtresi</div>
-            <div class="part-meta">HF-0330 · 24 stokta</div>
-          </div>
-          <div class="part-prob low">10%</div>
-        </div>
-
-        <div class="part" onclick="toggleCheck(this)">
-          <div class="part-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="part-body">
-            <div class="part-name">Hidrolik hortum seti</div>
-            <div class="part-meta" style="color: var(--danger);">HS-0055 · Sipariş bekleniyor</div>
-          </div>
-          <div class="part-prob low">4%</div>
+        <div id="jobPartsList">
+          <!-- Dinamik olarak dolacak -->
         </div>
       </div>
 
