@@ -2779,6 +2779,230 @@
   background: var(--accent);
     border-radius: 0 0 3px 3px;
   }
+
+  /* ===== Evidence Collection Screen ===== */
+  #s-evidence { display: none; flex-direction: column; height: 100%; background: var(--bg); }
+  #s-evidence.active { display: flex; }
+  .ev-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .ev-back {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: none; border: 0; color: var(--text-2);
+    font-size: 15px; font-weight: 500; padding: 4px 0; margin-bottom: 6px; cursor: pointer;
+  }
+  .ev-title { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+  .ev-subtitle { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+  .ev-required-banner {
+    margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text-2); font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .ev-required-banner.complete {
+    background: var(--accent-bg); border-color: var(--accent); color: var(--accent);
+  }
+  .ev-required-icons { display: inline-flex; gap: 6px; font-size: 16px; }
+  .ev-progress-wrap {
+    margin-top: 10px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-3); font-weight: 600;
+  }
+  .ev-progress-track {
+    flex: 1; height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden;
+  }
+  .ev-progress-fill {
+    height: 100%; background: #E85D2F; border-radius: 2px;
+    width: 50%; transition: width 0.3s ease;
+  }
+
+  .ev-scroll { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 100px; }
+
+  .ev-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .ev-card {
+    aspect-ratio: 1 / 0.95;
+    background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 14px 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer; position: relative;
+    transition: all 0.18s ease;
+    overflow: hidden;
+  }
+  .ev-card:active { transform: scale(0.97); }
+  .ev-card-icon { font-size: 32px; line-height: 1; }
+  .ev-card-label {
+    font-size: 13px; font-weight: 600; color: var(--text); text-align: center;
+  }
+  .ev-card.active {
+    border-color: #E85D2F; background: #fff4ef;
+  }
+  .ev-card.done {
+    border-color: var(--accent); background: var(--accent-bg);
+  }
+  .ev-card.done .ev-card-label { color: var(--accent); }
+  .ev-card.done::after {
+    content: "✓"; position: absolute; top: 8px; right: 10px;
+    color: var(--accent); font-weight: 800; font-size: 16px;
+  }
+  .ev-card.recording .ev-card-icon {
+    animation: ev-pulse 1s ease-in-out infinite;
+  }
+  @keyframes ev-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  .ev-rec-dot {
+    position: absolute; top: 8px; left: 10px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #E85D2F;
+    animation: ev-blink 1s ease-in-out infinite;
+  }
+  @keyframes ev-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .ev-rec-timer {
+    position: absolute; bottom: 8px;
+    font-size: 11px; font-weight: 700; color: #E85D2F;
+    font-variant-numeric: tabular-nums;
+  }
+  .ev-wave {
+    display: flex; align-items: center; gap: 2px; height: 18px; margin-top: 2px;
+  }
+  .ev-wave-bar {
+    width: 3px; background: #E85D2F; border-radius: 2px;
+    animation: ev-wave 0.9s ease-in-out infinite;
+  }
+  .ev-wave-bar:nth-child(1) { height: 30%; animation-delay: 0s; }
+  .ev-wave-bar:nth-child(2) { height: 70%; animation-delay: 0.1s; }
+  .ev-wave-bar:nth-child(3) { height: 50%; animation-delay: 0.2s; }
+  .ev-wave-bar:nth-child(4) { height: 90%; animation-delay: 0.3s; }
+  .ev-wave-bar:nth-child(5) { height: 40%; animation-delay: 0.4s; }
+  .ev-wave-bar:nth-child(6) { height: 65%; animation-delay: 0.5s; }
+  @keyframes ev-wave {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
+  }
+
+  /* Preview strip */
+  .ev-preview-section { margin-top: 18px; }
+  .ev-preview-title {
+    font-size: 12px; font-weight: 600; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .ev-preview-strip {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .ev-preview-strip::-webkit-scrollbar { display: none; }
+  .ev-chip {
+    flex-shrink: 0; position: relative;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 28px 8px 10px;
+    font-size: 12px; color: var(--text-2); font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    max-width: 160px;
+  }
+  .ev-chip.photo { padding: 0 28px 0 0; overflow: hidden; }
+  .ev-chip.photo img {
+    width: 64px; height: 56px; object-fit: cover; display: block;
+  }
+  .ev-chip.error { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+  .ev-chip.measure { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .ev-chip-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+  .ev-chip-x {
+    position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); color: #fff;
+    border: 0; cursor: pointer; font-size: 12px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ev-empty {
+    font-size: 12px; color: var(--text-3); padding: 8px 0; font-style: italic;
+  }
+
+  /* CTA */
+  .ev-cta-bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 12px 16px 16px;
+    background: linear-gradient(to top, var(--bg) 70%, rgba(255,255,255,0));
+    border-top: 1px solid var(--border);
+  }
+  .ev-cta-btn {
+    width: 100%; height: 52px; border: 0; border-radius: 14px;
+    background: var(--bg-3); color: var(--text-3);
+    font-size: 16px; font-weight: 700; cursor: not-allowed;
+    transition: all 0.2s ease;
+  }
+  .ev-cta-btn.ready {
+    background: #E85D2F; color: #fff; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(232, 93, 47, 0.3);
+  }
+  .ev-cta-btn.ready:active { transform: scale(0.98); }
+
+  /* Bottom sheet */
+  .ev-sheet-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    z-index: 50;
+  }
+  .ev-sheet-backdrop.show { opacity: 1; pointer-events: auto; }
+  .ev-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--bg); border-radius: 20px 20px 0 0;
+    padding: 18px 18px 22px;
+    transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 51;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+  }
+  .ev-sheet.show { transform: translateY(0); }
+  .ev-sheet-handle {
+    width: 36px; height: 4px; background: var(--bg-3); border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+  .ev-sheet-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+  .ev-sheet-input {
+    width: 100%; height: 48px; border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 0 14px; font-size: 16px;
+    background: var(--bg-2); color: var(--text);
+    font-family: inherit;
+  }
+  .ev-sheet-input:focus { outline: none; border-color: #E85D2F; background: var(--bg); }
+  textarea.ev-sheet-input { height: 110px; padding: 12px 14px; resize: none; line-height: 1.4; }
+  .ev-sheet-row { display: flex; gap: 8px; }
+  .ev-sheet-row .ev-sheet-input { flex: 1; }
+  .ev-unit-select {
+    height: 48px; border: 1.5px solid var(--border); border-radius: 12px;
+    background: var(--bg-2); padding: 0 12px; font-size: 15px; font-weight: 600;
+    color: var(--text); font-family: inherit; min-width: 90px;
+  }
+  .ev-sheet-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .ev-sheet-btn {
+    flex: 1; height: 46px; border-radius: 12px; border: 0;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: inherit;
+  }
+  .ev-sheet-btn.cancel { background: var(--bg-2); color: var(--text-2); }
+  .ev-sheet-btn.save { background: #E85D2F; color: #fff; }
+  .ev-sheet-char-count {
+    font-size: 11px; color: var(--text-3); text-align: right; margin-top: 6px;
+  }
+
+  /* Loading state */
+  .ev-loading {
+    position: absolute; inset: 0; background: rgba(255,255,255,0.96);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    z-index: 100;
+  }
+  .ev-loading.show { display: flex; }
+  .ev-loading-spinner {
+    width: 44px; height: 44px; border: 3px solid var(--bg-3);
+    border-top-color: #E85D2F; border-radius: 50%;
+    animation: ev-spin 0.9s linear infinite;
+  }
+  @keyframes ev-spin { to { transform: rotate(360deg); } }
+  .ev-loading-text { font-size: 15px; font-weight: 600; color: var(--text-2); }
 </style>
 <script type="module">
   // ================== ToolA ↔ Lovable Cloud bridge ==================
@@ -4157,6 +4381,111 @@
             <span style="color: var(--text-3);">Detay ›</span>
           </div>
         </button>
+      </div>
+    </div>
+
+    <!-- ===== EVIDENCE COLLECTION ===== -->
+    <div class="screen" id="s-evidence">
+      <div class="ev-header">
+        <button class="ev-back" onclick="evBack()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Geri
+        </button>
+        <div class="ev-title">Kanıt Topla</div>
+        <div class="ev-subtitle" id="evSubtitle">BSF 36-4.16H · Başakşehir, İstanbul</div>
+        <div class="ev-required-banner" id="evRequiredBanner">
+          <span>Gerekli:</span>
+          <span class="ev-required-icons" id="evRequiredIcons">📷 ⚠️ 📏</span>
+        </div>
+        <div class="ev-progress-wrap">
+          <span id="evProgressLabel">Adım 4 / 8</span>
+          <div class="ev-progress-track"><div class="ev-progress-fill" id="evProgressFill"></div></div>
+        </div>
+      </div>
+
+      <div class="ev-scroll">
+        <div class="ev-grid">
+          <div class="ev-card" id="evCard-photo" onclick="evTriggerFile('photo')">
+            <div class="ev-card-icon">📷</div>
+            <div class="ev-card-label">Fotoğraf</div>
+            <input type="file" id="evFile-photo" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'photo')">
+          </div>
+          <div class="ev-card" id="evCard-audio" onclick="evToggleAudio()">
+            <div class="ev-card-icon">🎙</div>
+            <div class="ev-card-label">Ses Kaydı</div>
+          </div>
+          <div class="ev-card" id="evCard-video" onclick="evTriggerFile('video')">
+            <div class="ev-card-icon">🎥</div>
+            <div class="ev-card-label">Video</div>
+            <input type="file" id="evFile-video" accept="video/*" capture="environment" style="display:none" onchange="evHandleFile(event,'video')">
+          </div>
+          <div class="ev-card" id="evCard-measure" onclick="evOpenSheet('measure')">
+            <div class="ev-card-icon">📏</div>
+            <div class="ev-card-label">Ölçüm</div>
+          </div>
+          <div class="ev-card" id="evCard-error" onclick="evOpenSheet('error')">
+            <div class="ev-card-icon">⚠️</div>
+            <div class="ev-card-label">Hata Kodu</div>
+          </div>
+          <div class="ev-card" id="evCard-note" onclick="evOpenSheet('note')">
+            <div class="ev-card-icon">📝</div>
+            <div class="ev-card-label">Not</div>
+          </div>
+        </div>
+
+        <div class="ev-preview-section">
+          <div class="ev-preview-title">Toplanan Kanıtlar</div>
+          <div class="ev-preview-strip" id="evPreviewStrip">
+            <div class="ev-empty">Henüz kanıt eklenmedi</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ev-cta-bar">
+        <button class="ev-cta-btn" id="evCtaBtn" onclick="evSubmit()" disabled>Teşhis Al →</button>
+      </div>
+
+      <div class="ev-sheet-backdrop" id="evSheetBackdrop" onclick="evCloseSheet()"></div>
+
+      <div class="ev-sheet" id="evSheet-measure">
+        <div class="ev-sheet-handle"></div>
+        <div class="ev-sheet-title">Ölçüm Ekle</div>
+        <div class="ev-sheet-row">
+          <input type="number" inputmode="decimal" class="ev-sheet-input" id="evMeasureValue" placeholder="Değer">
+          <select class="ev-unit-select" id="evMeasureUnit">
+            <option>bar</option><option>°C</option><option>dB</option><option>rpm</option><option>mm</option>
+          </select>
+        </div>
+        <div class="ev-sheet-actions">
+          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
+          <button class="ev-sheet-btn save" onclick="evSaveMeasure()">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="ev-sheet" id="evSheet-error">
+        <div class="ev-sheet-handle"></div>
+        <div class="ev-sheet-title">Hata Kodu Ekle</div>
+        <input type="text" class="ev-sheet-input" id="evErrorInput" placeholder="Örn: H-201, E-4521" autocomplete="off">
+        <div class="ev-sheet-actions">
+          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
+          <button class="ev-sheet-btn save" onclick="evSaveError()">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="ev-sheet" id="evSheet-note">
+        <div class="ev-sheet-handle"></div>
+        <div class="ev-sheet-title">Not Ekle</div>
+        <textarea class="ev-sheet-input" id="evNoteInput" maxlength="280" placeholder="Gözlemini yaz..."></textarea>
+        <div class="ev-sheet-char-count"><span id="evNoteCount">0</span> / 280</div>
+        <div class="ev-sheet-actions">
+          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
+          <button class="ev-sheet-btn save" onclick="evSaveNote()">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="ev-loading" id="evLoading">
+        <div class="ev-loading-spinner"></div>
+        <div class="ev-loading-text">ToolA analiz ediyor...</div>
       </div>
     </div>
 
@@ -6071,6 +6400,269 @@
     closeContext = { woId: null, machine: 'BSF 36-4.16H', from: null };
     goHome();
   }
+
+  // ===== Evidence Collection Screen =====
+  const evState = {
+    items: [],          // {id, type, label, value, thumb}
+    required: ['photo','error','measure'],
+    returnTo: 'job',
+    equipment: 'BSF 36-4.16H',
+    location: 'Başakşehir, İstanbul',
+    title: '',
+    woId: null,
+    audioRecording: false,
+    audioTimer: null,
+    audioStart: 0,
+  };
+
+  function openEvidence(opts = {}) {
+    evState.items = [];
+    evState.required = opts.required || ['photo','error','measure'];
+    evState.returnTo = opts.returnTo || 'job';
+    evState.equipment = opts.equipment || 'BSF 36-4.16H';
+    evState.location = opts.location || 'Başakşehir, İstanbul';
+    evState.title = opts.title || (evState.equipment + ' arızası');
+    evState.woId = opts.woId || null;
+
+    document.getElementById('evSubtitle').textContent =
+      evState.equipment + ' · ' + evState.location;
+
+    const iconMap = { photo:'📷', audio:'🎙', video:'🎥', measure:'📏', error:'⚠️', note:'📝' };
+    document.getElementById('evRequiredIcons').textContent =
+      evState.required.map(r => iconMap[r] || '•').join(' ');
+
+    // Reset cards
+    ['photo','audio','video','measure','error','note'].forEach(t => {
+      const c = document.getElementById('evCard-' + t);
+      if (c) {
+        c.classList.remove('done','active','recording');
+        const lbl = c.querySelector('.ev-card-label');
+        const orig = { photo:'Fotoğraf', audio:'Ses Kaydı', video:'Video', measure:'Ölçüm', error:'Hata Kodu', note:'Not' }[t];
+        if (lbl) lbl.textContent = orig;
+        c.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
+      }
+    });
+
+    evRender();
+    showScreen('evidence');
+  }
+
+  function evBack() {
+    if (evState.audioRecording) evStopAudio();
+    if (evState.returnTo === 'job') showScreen('job');
+    else if (evState.returnTo === 'home') goHome();
+    else showScreen(evState.returnTo);
+  }
+
+  function evRender() {
+    // Preview strip
+    const strip = document.getElementById('evPreviewStrip');
+    if (!evState.items.length) {
+      strip.innerHTML = '<div class="ev-empty">Henüz kanıt eklenmedi</div>';
+    } else {
+      strip.innerHTML = evState.items.map(it => {
+        if (it.type === 'photo' && it.thumb) {
+          return `<div class="ev-chip photo" data-id="${it.id}">
+            <img src="${it.thumb}" alt="">
+            <button class="ev-chip-x" onclick="evRemove('${it.id}')">×</button></div>`;
+        }
+        const cls = it.type === 'error' ? 'error' : (it.type === 'measure' ? 'measure' : '');
+        return `<div class="ev-chip ${cls}" data-id="${it.id}">
+          <span class="ev-chip-text">${it.label}</span>
+          <button class="ev-chip-x" onclick="evRemove('${it.id}')">×</button></div>`;
+      }).join('');
+    }
+
+    // Required banner
+    const haveTypes = new Set(evState.items.map(i => i.type));
+    const allRequired = evState.required.every(r => haveTypes.has(r));
+    document.getElementById('evRequiredBanner').classList.toggle('complete', allRequired);
+
+    // Progress
+    const total = 8;
+    const done = Math.min(evState.items.length, total);
+    document.getElementById('evProgressLabel').textContent = `Adım ${done} / ${total}`;
+    document.getElementById('evProgressFill').style.width = ((done/total)*100) + '%';
+
+    // CTA
+    const btn = document.getElementById('evCtaBtn');
+    if (allRequired) {
+      btn.classList.add('ready');
+      btn.disabled = false;
+      btn.textContent = `Teşhis Al → (${evState.items.length} kanıt)`;
+    } else {
+      btn.classList.remove('ready');
+      btn.disabled = true;
+      btn.textContent = 'Teşhis Al →';
+    }
+
+    // Card done states
+    ['photo','audio','video','measure','error','note'].forEach(t => {
+      const card = document.getElementById('evCard-' + t);
+      if (!card) return;
+      const has = haveTypes.has(t);
+      card.classList.toggle('done', has);
+    });
+  }
+
+  function evAdd(item) {
+    item.id = 'ev-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+    evState.items.push(item);
+    evRender();
+  }
+
+  function evRemove(id) {
+    evState.items = evState.items.filter(i => i.id !== id);
+    evRender();
+  }
+
+  function evTriggerFile(type) {
+    const inp = document.getElementById('evFile-' + type);
+    if (inp) inp.click();
+  }
+
+  function evHandleFile(e, type) {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (type === 'photo') {
+      const url = URL.createObjectURL(f);
+      evAdd({ type:'photo', label:'Fotoğraf', thumb:url });
+    } else {
+      evAdd({ type:'video', label:'🎥 Video (' + Math.round(f.size/1024) + ' KB)' });
+    }
+    e.target.value = '';
+  }
+
+  function evToggleAudio() {
+    if (evState.audioRecording) {
+      evStopAudio();
+    } else {
+      evStartAudio();
+    }
+  }
+
+  function evStartAudio() {
+    evState.audioRecording = true;
+    evState.audioStart = Date.now();
+    const card = document.getElementById('evCard-audio');
+    card.classList.add('active','recording');
+
+    const dot = document.createElement('div');
+    dot.className = 'ev-rec-dot';
+    card.appendChild(dot);
+
+    const wave = document.createElement('div');
+    wave.className = 'ev-wave';
+    wave.innerHTML = '<div class="ev-wave-bar"></div>'.repeat(6);
+    const lbl = card.querySelector('.ev-card-label');
+    lbl.textContent = 'Kaydediliyor...';
+    card.insertBefore(wave, lbl.nextSibling);
+
+    const timer = document.createElement('div');
+    timer.className = 'ev-rec-timer';
+    timer.textContent = '00:00';
+    card.appendChild(timer);
+
+    evState.audioTimer = setInterval(() => {
+      const sec = Math.floor((Date.now() - evState.audioStart) / 1000);
+      const mm = String(Math.floor(sec/60)).padStart(2,'0');
+      const ss = String(sec%60).padStart(2,'0');
+      timer.textContent = mm + ':' + ss;
+      if (sec >= 30) evStopAudio();
+    }, 250);
+  }
+
+  function evStopAudio() {
+    if (!evState.audioRecording) return;
+    const sec = Math.min(30, Math.floor((Date.now() - evState.audioStart) / 1000));
+    clearInterval(evState.audioTimer);
+    evState.audioRecording = false;
+    const card = document.getElementById('evCard-audio');
+    card.classList.remove('active','recording');
+    card.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
+    const lbl = card.querySelector('.ev-card-label');
+    lbl.textContent = 'Ses Kaydı';
+    const dur = Math.max(1, sec);
+    evAdd({ type:'audio', label:`🎙 ${dur}s ses kaydı` });
+  }
+
+  // Bottom sheets
+  function evOpenSheet(kind) {
+    document.getElementById('evSheetBackdrop').classList.add('show');
+    document.getElementById('evSheet-' + kind).classList.add('show');
+    if (kind === 'measure') setTimeout(() => document.getElementById('evMeasureValue').focus(), 200);
+    if (kind === 'error') setTimeout(() => document.getElementById('evErrorInput').focus(), 200);
+    if (kind === 'note') setTimeout(() => document.getElementById('evNoteInput').focus(), 200);
+  }
+  function evCloseSheet() {
+    document.getElementById('evSheetBackdrop').classList.remove('show');
+    ['measure','error','note'].forEach(k => document.getElementById('evSheet-' + k).classList.remove('show'));
+  }
+  function evSaveMeasure() {
+    const v = document.getElementById('evMeasureValue').value.trim();
+    const u = document.getElementById('evMeasureUnit').value;
+    if (!v) return;
+    evAdd({ type:'measure', label: v + ' ' + u });
+    document.getElementById('evMeasureValue').value = '';
+    evCloseSheet();
+  }
+  function evSaveError() {
+    const v = document.getElementById('evErrorInput').value.trim();
+    if (!v) return;
+    evAdd({ type:'error', label: '⚠️ ' + v });
+    document.getElementById('evErrorInput').value = '';
+    evCloseSheet();
+  }
+  function evSaveNote() {
+    const v = document.getElementById('evNoteInput').value.trim();
+    if (!v) return;
+    const short = v.length > 40 ? v.slice(0,40) + '…' : v;
+    evAdd({ type:'note', label: '📝 ' + short });
+    document.getElementById('evNoteInput').value = '';
+    document.getElementById('evNoteCount').textContent = '0';
+    evCloseSheet();
+  }
+
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'evNoteInput') {
+      document.getElementById('evNoteCount').textContent = e.target.value.length;
+    }
+  });
+
+  function evSubmit() {
+    const btn = document.getElementById('evCtaBtn');
+    if (btn.disabled) return;
+    if (evState.audioRecording) evStopAudio();
+
+    // Try to route to existing diagnosis flow, otherwise show loading
+    const summary = evState.items.map(i => i.label).join(' · ');
+    const title = evState.title + (summary ? ' — ' + summary : '');
+
+    if (typeof startDiagnosis === 'function') {
+      startDiagnosis(title, evState.woId || null);
+    } else {
+      const loading = document.getElementById('evLoading');
+      loading.classList.add('show');
+      setTimeout(() => {
+        loading.classList.remove('show');
+        if (typeof showScreen === 'function') showScreen('answer');
+      }, 1800);
+    }
+  }
+
+  // Expose for inline onclick
+  window.openEvidence = openEvidence;
+  window.evBack = evBack;
+  window.evTriggerFile = evTriggerFile;
+  window.evHandleFile = evHandleFile;
+  window.evToggleAudio = evToggleAudio;
+  window.evOpenSheet = evOpenSheet;
+  window.evCloseSheet = evCloseSheet;
+  window.evSaveMeasure = evSaveMeasure;
+  window.evSaveError = evSaveError;
+  window.evSaveNote = evSaveNote;
+  window.evRemove = evRemove;
+  window.evSubmit = evSubmit;
 
   document.addEventListener('gesturestart', e => e.preventDefault());
 </script>
