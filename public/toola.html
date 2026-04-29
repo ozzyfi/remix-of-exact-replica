@@ -6920,6 +6920,30 @@
     if (btn.disabled) return;
     if (evState.audioRecording) evStopAudio();
 
+    // Tip → {icon,label} eşleme
+    const evIconMap = {
+      photo:     { icon: '📷',  label: 'Fotoğraf' },
+      audio:     { icon: '🎙',  label: 'Ses kaydı' },
+      video:     { icon: '🎥',  label: 'Video' },
+      measure:   { icon: '📏',  label: 'Ölçüm' },
+      error:     { icon: '⚠️', label: 'Hata kodu' },
+      errorcode: { icon: '⚠️', label: 'Hata kodu' },
+      note:      { icon: '📝',  label: 'Not' }
+    };
+
+    // Toplanan kanıtları normalize et ve sessionStorage'a kaydet
+    const persisted = evState.items.map(it => {
+      const fallback = evIconMap[it.type] || { icon: '•', label: it.type || 'Kanıt' };
+      return {
+        type: it.type,
+        icon: it.icon || fallback.icon,
+        label: it.label || fallback.label
+      };
+    });
+    try {
+      sessionStorage.setItem('lastEvidence', JSON.stringify(persisted));
+    } catch (e) { /* sessionStorage erişim hatası — sessizce geç */ }
+
     // Try to route to existing diagnosis flow, otherwise show loading
     const summary = evState.items.map(i => i.label).join(' · ');
     const fullTitle = evState.title + ' — Kanıtlar: ' + summary;
@@ -6935,6 +6959,35 @@
       }, 1800);
     }
   }
+
+  // s-answer açılınca kanıt context bandını çiz
+  function renderEvidenceContext() {
+    const ev = sessionStorage.getItem('lastEvidence');
+    const bar = document.getElementById('evContextBar');
+    const chips = document.getElementById('evContextChips');
+    const extraStep = document.getElementById('ts-3b');
+    if (!bar || !chips) return;
+    if (!ev) {
+      bar.style.display = 'none';
+      if (extraStep) extraStep.style.display = 'none';
+      return;
+    }
+    let items = [];
+    try { items = JSON.parse(ev) || []; } catch (e) { items = []; }
+    if (items.length > 0) {
+      chips.innerHTML = items.map(item =>
+        '<span class="ev-ctx-chip">' +
+        (item.icon || '•') + ' ' + (item.label || '') +
+        '</span>'
+      ).join('');
+      bar.style.display = 'block';
+      if (extraStep) extraStep.style.display = '';
+    } else {
+      bar.style.display = 'none';
+      if (extraStep) extraStep.style.display = 'none';
+    }
+  }
+  window.renderEvidenceContext = renderEvidenceContext;
 
   // Expose for inline onclick
   window.openEvidence = openEvidence;
