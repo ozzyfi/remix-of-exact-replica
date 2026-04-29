@@ -5656,6 +5656,7 @@
     if (!isDiag) {
       showScreen('answer');
       setTab(1);
+      if (typeof renderEvidenceContext === 'function') renderEvidenceContext();
       document.getElementById('answerQuestion').textContent = q;
       document.getElementById('respTime').textContent = 'Hazırlanıyor...';
       document.getElementById('thinkingBox').style.display = 'none';
