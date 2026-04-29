@@ -697,21 +697,28 @@
     color: var(--text-3);
     font-weight: 500;
   }
+  .job-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .job-footer .job-ref { margin: 0; }
   .job-evidence-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 12px;
-    padding: 9px 14px;
+    padding: 8px 13px;
     background: var(--accent, #E85D2F);
     color: #fff;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
-    border-radius: 10px;
+    border-radius: 9px;
     border: none;
     cursor: pointer;
     font-family: inherit;
     line-height: 1;
+    white-space: nowrap;
     transition: opacity .15s ease, transform .1s ease;
   }
   .job-evidence-btn:hover { opacity: .92; }
@@ -3432,11 +3439,13 @@
           </div>
           <div class="job-loc">Başakşehir, İstanbul</div>
           <div class="job-desc">Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.</div>
-          <div class="job-ref">WO-4471 · H-201</div>
-          <span class="job-evidence-btn" role="button" tabindex="0"
-            onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSF 36-4.16H Bom Pompası', location: 'Başakşehir, İstanbul', required: ['photo','audio'], woId: 'WO-4471', returnTo: 'job' });">
-            Kanıt Topla →
-          </span>
+          <div class="job-footer">
+            <div class="job-ref">WO-4471 · H-201</div>
+            <span class="job-evidence-btn" role="button" tabindex="0"
+              onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSF 36-4.16H Bom Pompası', location: 'Başakşehir, İstanbul', required: ['photo','audio'], woId: 'WO-4471', returnTo: 'job' });">
+              Kanıt Topla →
+            </span>
+          </div>
         </button>
 
         <button class="job" onclick="notImplementedJob('BSA 1005')">
@@ -3446,11 +3455,13 @@
           </div>
           <div class="job-loc">Çankaya, Ankara</div>
           <div class="job-desc">Pompalama hattı tıkanması. S-valf ve aşınma plakası kontrol edilecek.</div>
-          <div class="job-ref">WO-4467 · P-105</div>
-          <span class="job-evidence-btn" role="button" tabindex="0"
-            onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSA 1005 Sabit Pompa', location: 'Çankaya, Ankara', required: ['photo','measurement'], woId: 'WO-4467', returnTo: 'job' });">
-            Kanıt Topla →
-          </span>
+          <div class="job-footer">
+            <div class="job-ref">WO-4467 · P-105</div>
+            <span class="job-evidence-btn" role="button" tabindex="0"
+              onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSA 1005 Sabit Pompa', location: 'Çankaya, Ankara', required: ['photo','measurement'], woId: 'WO-4467', returnTo: 'job' });">
+              Kanıt Topla →
+            </span>
+          </div>
         </button>
 
         <button class="job" onclick="notImplementedJob('BSF 42')">
@@ -3460,11 +3471,13 @@
           </div>
           <div class="job-loc">Konak, İzmir</div>
           <div class="job-desc">3. bom kolu hareket kısıtlaması. Silindir contası ve pim kontrolü yapılacak.</div>
-          <div class="job-ref">WO-4462 · B-310</div>
-          <span class="job-evidence-btn" role="button" tabindex="0"
-            onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSF 42-5.16H Bom Pompası', location: 'Konak, İzmir', required: ['photo','video'], woId: 'WO-4462', returnTo: 'job' });">
-            Kanıt Topla →
-          </span>
+          <div class="job-footer">
+            <div class="job-ref">WO-4462 · B-310</div>
+            <span class="job-evidence-btn" role="button" tabindex="0"
+              onclick="event.stopPropagation(); window.openEvidence({ equipment: 'BSF 42-5.16H Bom Pompası', location: 'Konak, İzmir', required: ['photo','video'], woId: 'WO-4462', returnTo: 'job' });">
+              Kanıt Topla →
+            </span>
+          </div>
         </button>
       </div>
 
