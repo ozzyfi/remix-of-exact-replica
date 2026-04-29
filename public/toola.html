@@ -6353,26 +6353,139 @@
     document.getElementById('s-close').scrollTop = 0;
   }
 
+  // Yakalanan değerleri tutan state (confirmCapture'da forma yazılır)
+  let lastCapture = null;
+
   function startVoiceFill() {
-    const spec = CATEGORY_FORMS[currentCat];
-    const hints = {
-      ariza: 'Arızayı ve yaptıklarını anlat',
-      bakim: 'Hangi bakımı yaptığını anlat',
-      parca: 'Değiştirdiğin parçayı ve sebebini anlat',
-      diger: 'Yaptığın işlemi anlat'
-    };
-    document.getElementById('listenOverlay').classList.add('active');
-    document.getElementById('listenHint').textContent = hints[currentCat] || 'İşi anlat';
-    document.getElementById('transcriptBox').innerHTML = '<span class="ph cursor-blink">İşi anlat...</span>';
-    listenTimeout = setTimeout(() => {
-      typeText(document.getElementById('transcriptBox'), spec.voiceSample);
-    }, 1000);
-    const orig = window.submitListen;
-    window.submitListen = function() {
-      cancelListen();
-      setTimeout(() => { autoFillForm(); window.submitListen = orig; }, 200);
-    };
+    const voiceCallTitle = document.getElementById('voiceCallTitle');
+    const voiceCallSub = document.getElementById('voiceCallSub');
+    const panel = document.getElementById('aiCapturePanel');
+
+    // 1) Dinleniyor durumu
+    if (voiceCallTitle) voiceCallTitle.innerHTML = '<span class="voice-listening-dot"></span>Dinleniyor...';
+    if (voiceCallSub) voiceCallSub.textContent = 'Konuş, alanları doldurayım';
+
+    // 2) 3 sn sonra "analiz ediliyor"
+    setTimeout(() => {
+      if (voiceCallTitle) voiceCallTitle.textContent = 'Analiz ediliyor...';
+      if (voiceCallSub) voiceCallSub.textContent = 'Sesli not işleniyor';
+
+      // 3) 1 sn sonra capture panelini göster
+      setTimeout(() => {
+        lastCapture = {
+          action: 'Hidrolik pompa değişimi',
+          part: 'HP-4420 hidrolik pompa',
+          cause: 'Aşınma — 3.847 saatte ömür dolumu',
+          test: 'Başarılı — basınç 340 bar\'a ulaştı',
+          follow: 'Yok'
+        };
+        if (panel) {
+          panel.innerHTML = `
+            <div class="ai-capture-card">
+              <div class="ai-capture-header">
+                <div class="ai-capture-dot"></div>
+                <span>ToolA yakaladı</span>
+                <span class="ai-capture-sub">Sesli nottan çıkarıldı</span>
+              </div>
+              <div class="ai-capture-row">
+                <span class="ai-cap-key">Yapılan işlem</span>
+                <span class="ai-cap-val" id="capAction">${lastCapture.action}</span>
+              </div>
+              <div class="ai-capture-row">
+                <span class="ai-cap-key">Değiştirilen parça</span>
+                <span class="ai-cap-val" id="capPart">${lastCapture.part}</span>
+              </div>
+              <div class="ai-capture-row">
+                <span class="ai-cap-key">Kök neden</span>
+                <span class="ai-cap-val" id="capCause">${lastCapture.cause}</span>
+              </div>
+              <div class="ai-capture-row">
+                <span class="ai-cap-key">Test sonucu</span>
+                <span class="ai-cap-val" id="capTest">${lastCapture.test}</span>
+              </div>
+              <div class="ai-capture-row">
+                <span class="ai-cap-key">Takip aksiyonu</span>
+                <span class="ai-cap-val" id="capFollow">${lastCapture.follow}</span>
+              </div>
+            </div>
+            <div class="ai-capture-confirm">
+              <button class="ai-cap-edit" onclick="editCapture()">Düzenle</button>
+              <button class="ai-cap-ok" onclick="confirmCapture()">Onayla →</button>
+            </div>
+          `;
+          panel.style.display = 'block';
+        }
+        if (voiceCallTitle) voiceCallTitle.textContent = 'Yakalananları onayla';
+        if (voiceCallSub) voiceCallSub.textContent = 'Aşağıdaki bilgileri kontrol et';
+      }, 1000);
+    }, 3000);
   }
+
+  function editCapture() {
+    // Düzenle: paneli kapat, kullanıcı elle düzenlesin
+    const panel = document.getElementById('aiCapturePanel');
+    if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+    const voiceCallTitle = document.getElementById('voiceCallTitle');
+    const voiceCallSub = document.getElementById('voiceCallSub');
+    if (voiceCallTitle) voiceCallTitle.textContent = 'Mikrofona anlat';
+    if (voiceCallSub) voiceCallSub.textContent = 'Alanları senin yerine doldurayım';
+  }
+
+  function confirmCapture() {
+    if (!lastCapture) return;
+    const panel = document.getElementById('aiCapturePanel');
+    if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+
+    // formFields içindeki ilgili input alanlarını yakalanan değerlerle doldur
+    const map = {
+      ariza: {
+        ariza: 'Hidrolik basınç düşüklüğü',
+        neden: lastCapture.cause,
+        yapilan: lastCapture.action + ' — ' + lastCapture.part + '. Test: ' + lastCapture.test + '.',
+        sure: '90'
+      },
+      bakim: {
+        yapilanBakim: lastCapture.action + ' (' + lastCapture.part + ')',
+        periyod: '—',
+        notlar: 'Kök neden: ' + lastCapture.cause + '. ' + lastCapture.test
+      },
+      parca: {
+        parca: lastCapture.part,
+        nedenDeg: lastCapture.cause,
+        parcaNo: 'HP-4420'
+      },
+      diger: {
+        islem: lastCapture.action,
+        aciklama: lastCapture.part + '. ' + lastCapture.cause + '. ' + lastCapture.test,
+        notlar2: 'Takip: ' + lastCapture.follow
+      }
+    };
+    const values = map[currentCat] || {};
+    Object.entries(values).forEach(([fieldId, value], i) => {
+      setTimeout(() => {
+        const input = document.getElementById('f-' + fieldId);
+        const block = document.getElementById('field-' + fieldId);
+        const aiTag = document.getElementById('ai-' + fieldId);
+        if (input) typeIntoField(input, String(value));
+        if (block) block.classList.add('filled');
+        if (aiTag) aiTag.classList.add('on');
+      }, i * 250);
+    });
+
+    // voiceCall butonunu yeşile döndür
+    const voiceCall = document.getElementById('voiceCall');
+    const voiceCallTitle = document.getElementById('voiceCallTitle');
+    const voiceCallSub = document.getElementById('voiceCallSub');
+    const voiceCallIcon = document.getElementById('voiceCallIcon');
+    const orDivider = document.getElementById('orDivider');
+
+    if (voiceCall) voiceCall.classList.add('filled');
+    if (voiceCallTitle) voiceCallTitle.textContent = '✓ Sesli not işlendi';
+    if (voiceCallSub) voiceCallSub.textContent = 'Alanları kontrol et, gerekiyorsa düzenle';
+    if (voiceCallIcon) voiceCallIcon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    if (orDivider) orDivider.style.display = 'none';
+  }
+
 
   function autoFillForm() {
     const spec = CATEGORY_FORMS[currentCat];
