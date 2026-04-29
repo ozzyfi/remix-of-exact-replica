@@ -4991,6 +4991,32 @@
     const pEl = document.getElementById('jobDetailPriority');
     if (pEl) { pEl.textContent = p.label; pEl.style.color = p.color; }
     set('jobDetailComplaint', j.complaint);
+
+    // Dinamik parça listesi
+    const partsContainer = document.getElementById('jobPartsList');
+    if (partsContainer && j.parts) {
+      partsContainer.innerHTML = j.parts.map(p => {
+        const isLow = p.stock.includes('Sipariş');
+        const probClass = p.prob >= 50 ? '' : 'low';
+        return '<div class="part" onclick="toggleCheck(this)">' +
+          '<div class="part-check">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">' +
+              '<polyline points="20 6 9 17 4 12"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="part-body">' +
+            '<div class="part-name">' + p.name + '</div>' +
+            '<div class="part-meta" ' + (isLow ? 'style="color:var(--danger)"' : '') + '>' +
+              p.code + ' · ' + p.stock +
+            '</div>' +
+          '</div>' +
+          '<div class="part-prob ' + probClass + '">' + p.prob + '%</div>' +
+        '</div>';
+      }).join('');
+    }
+    const countEl = document.getElementById('jobPartsCount');
+    if (countEl) countEl.textContent = (j.parts ? j.parts.length : 0) + ' parça · geçmiş vakalara göre sıralandı';
+
     showScreen('job'); setTab(0);
   }
   function jobStartDiag() {
