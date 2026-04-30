@@ -5401,6 +5401,7 @@
     }, 1500);
   }
 
+  async function openCorrectionWO() {
     if (!currentThread) return;
     const originalWo = currentThread.woId;
     showToast('Düzeltme iş emri açıldı · ' + (originalWo || '—') + ' referans alındı');
