@@ -5370,7 +5370,37 @@
     showToast(currentMachine.name + ' için iş bildirimi dispatcher\'a gönderildi');
   }
 
-  async function openCorrectionWO() {
+  function askMachine(btn) {
+    if (!btn) return;
+    const input = document.getElementById('machineAskInput');
+    if (input) input.value = btn.textContent.trim();
+    submitMachineAsk();
+  }
+
+  function submitMachineAsk() {
+    const input = document.getElementById('machineAskInput');
+    const ans = document.getElementById('machineAskAnswer');
+    if (!input || !ans) return;
+    const q = (input.value || '').trim();
+    if (!q) return;
+    ans.style.display = 'block';
+    ans.textContent = 'ToolA düşünüyor...';
+    setTimeout(() => {
+      const ql = q.toLowerCase();
+      let answer;
+      if (ql.includes('arızalan')) {
+        answer = 'BSF 36 son 6 ayda 3 kez arızalandı. En son 18 Ocak\'ta basınç valfi arızası. Ortalama arıza aralığı 47 gün. Kaynak: WO-4469, WO-4463, WO-4458';
+      } else if (ql.includes('rulman')) {
+        answer = 'OEM kılavuzu 2.000 saatte değişim öneriyor. Saha verisine göre ortalama 1.650 saatte arıza görülüyor. Son değişim: 4 Kasım 2025. Kaynak: Putzmeister Servis Kılavuzu s.156';
+      } else if (ql.includes('bakım')) {
+        answer = 'Haziran 2026 bakımında: hidrolik yağ filtresi (30% tıkanma var), kaplin kontrolü ve basınç testi öneriliyor. Kaynak: Son 3 vaka analizi';
+      } else {
+        answer = 'Bu makineyle ilgili ' + q + ' konusunda geçmiş 47 kayıtta benzer veri bulunamadı. Daha fazla saha verisi gerekmesi halinde ToolA size bildirir.';
+      }
+      ans.textContent = answer;
+    }, 1500);
+  }
+
     if (!currentThread) return;
     const originalWo = currentThread.woId;
     showToast('Düzeltme iş emri açıldı · ' + (originalWo || '—') + ' referans alındı');
