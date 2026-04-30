@@ -4981,6 +4981,18 @@
     const countEl = document.getElementById('jobPartsCount');
     if (countEl) countEl.textContent = (j.parts ? j.parts.length : 0) + ' parça · geçmiş vakalara göre sıralandı';
 
+    // Dinamik geçmiş işlemler
+    const logsContainer = document.getElementById('jobLogs');
+    if (logsContainer && j.logs) {
+      logsContainer.innerHTML = j.logs.map(l =>
+        '<div class="log">' +
+        '<div class="log-date">' + l.date + '</div>' +
+        '<div class="log-what">' + l.what + '</div>' +
+        '<div class="log-dur">' + l.dur + '</div>' +
+        '</div>'
+      ).join('');
+    }
+
     showScreen('job'); setTab(0);
   }
   function jobStartDiag() {
