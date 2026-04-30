@@ -579,7 +579,79 @@
     gap: 8px;
   }
 
-  /* Risk analysis cards on machine detail */
+  .machine-subtitle {
+    font-size: 12px;
+    color: var(--text-3);
+    padding: 8px 16px 0;
+  }
+
+  .machine-ask-wrap {
+    padding: 16px;
+    border-top: 0.5px solid var(--border);
+    margin-top: 8px;
+  }
+  .machine-ask-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 8px;
+  }
+  .machine-ask-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .machine-ask-chip {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text-2);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .machine-ask-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .machine-ask-input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+  .machine-ask-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #E85D2F;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: white;
+  }
+  .machine-ask-answer {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: var(--bg-2);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+    border-left: 3px solid #E85D2F;
+  }
+
   .risk-card {
     padding: 12px 14px;
     background: var(--bg-2);
@@ -3815,9 +3887,11 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
           Geri
         </button>
-        <div class="topbar-title">Makine</div>
+        <div class="topbar-title">Makine Hafızası</div>
         <div class="topbar-action"></div>
       </div>
+
+      <div class="machine-subtitle">Seçili makineyle ilgili her şeyi sor</div>
 
       <div class="machine-detail-top">
         <div class="machine-detail-name" id="machineDetailName">BSF 36-4.16H Bom Pompası</div>
@@ -3903,6 +3977,25 @@
         <div id="machineLogList">
           <!-- Dinamik olarak dolacak -->
         </div>
+      </div>
+
+      <div class="machine-ask-wrap">
+        <div class="machine-ask-label">Bu makine hakkında sor</div>
+        <div class="machine-ask-examples">
+          <button class="machine-ask-chip" onclick="askMachine(this)">Son 6 ayda kaç kez arızalandı?</button>
+          <button class="machine-ask-chip" onclick="askMachine(this)">Rulman ne sıklıkla değişiyor?</button>
+          <button class="machine-ask-chip" onclick="askMachine(this)">Bir sonraki bakımda ne yapılmalı?</button>
+        </div>
+        <div class="machine-ask-input-row">
+          <input type="text" class="machine-ask-input" id="machineAskInput" placeholder="Bu makine hakkında bir şey sor...">
+          <button class="machine-ask-btn" onclick="submitMachineAsk()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+        </div>
+        <div class="machine-ask-answer" id="machineAskAnswer" style="display:none"></div>
       </div>
 
       <div class="machine-actions">
@@ -5275,6 +5368,37 @@
     // Teknisyen iş emri açmaz; dispatcher'a sinyal gönderir
     if (!currentMachine) return;
     showToast(currentMachine.name + ' için iş bildirimi dispatcher\'a gönderildi');
+  }
+
+  function askMachine(btn) {
+    if (!btn) return;
+    const input = document.getElementById('machineAskInput');
+    if (input) input.value = btn.textContent.trim();
+    submitMachineAsk();
+  }
+
+  function submitMachineAsk() {
+    const input = document.getElementById('machineAskInput');
+    const ans = document.getElementById('machineAskAnswer');
+    if (!input || !ans) return;
+    const q = (input.value || '').trim();
+    if (!q) return;
+    ans.style.display = 'block';
+    ans.textContent = 'ToolA düşünüyor...';
+    setTimeout(() => {
+      const ql = q.toLowerCase();
+      let answer;
+      if (ql.includes('arızalan')) {
+        answer = 'BSF 36 son 6 ayda 3 kez arızalandı. En son 18 Ocak\'ta basınç valfi arızası. Ortalama arıza aralığı 47 gün. Kaynak: WO-4469, WO-4463, WO-4458';
+      } else if (ql.includes('rulman')) {
+        answer = 'OEM kılavuzu 2.000 saatte değişim öneriyor. Saha verisine göre ortalama 1.650 saatte arıza görülüyor. Son değişim: 4 Kasım 2025. Kaynak: Putzmeister Servis Kılavuzu s.156';
+      } else if (ql.includes('bakım')) {
+        answer = 'Haziran 2026 bakımında: hidrolik yağ filtresi (30% tıkanma var), kaplin kontrolü ve basınç testi öneriliyor. Kaynak: Son 3 vaka analizi';
+      } else {
+        answer = 'Bu makineyle ilgili ' + q + ' konusunda geçmiş 47 kayıtta benzer veri bulunamadı. Daha fazla saha verisi gerekmesi halinde ToolA size bildirir.';
+      }
+      ans.textContent = answer;
+    }, 1500);
   }
 
   async function openCorrectionWO() {
