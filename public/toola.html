@@ -5181,14 +5181,24 @@
 
   // Machine detail
   let currentMachine = null;
-  function openMachine(name, loc, status) {
-    currentMachine = { name, loc, status };
+  function openMachine(arg1, loc, status) {
+    // Support both legacy signature (name, loc, status) and new object signature
+    let data;
+    if (typeof arg1 === 'object' && arg1 !== null) {
+      data = arg1;
+    } else {
+      data = { name: arg1, location: loc, status: status };
+    }
+
+    const name = data.name || '';
     const displayName = (name.includes('Pompa') || name.includes('Mikser')) ? name :
                         (name.startsWith('BSF') ? name + ' Bom Pompası' :
                          name.startsWith('BSA') ? name + ' Sabit Pompa' :
                          name.startsWith('M-') ? name + ' Mikser' : name);
+    currentMachine = { ...data, name: displayName, loc: data.location || data.loc };
+
     document.getElementById('machineDetailName').textContent = displayName;
-    document.getElementById('machineDetailLoc').textContent = loc;
+    document.getElementById('machineDetailLoc').textContent = data.location || data.loc || '';
 
     const statusMap = {
       ok: { label: '✓ Açık iş emri yok', cls: 'ok' },
@@ -5196,9 +5206,63 @@
       fault: { label: 'Arıza · Aktif iş var', cls: 'fault' },
       service: { label: 'Bakımda', cls: 'service' }
     };
-    const s = statusMap[status] || statusMap.ok;
+    const s = statusMap[data.status] || statusMap.ok;
     document.getElementById('machineDetailStatus').innerHTML =
       `<div class="machine-status ${s.cls}">${s.label}</div>`;
+
+    // Spec items
+    if (data.hours) {
+      const hEl = document.getElementById('machineHours');
+      if (hEl) hEl.textContent = data.hours;
+    }
+    if (data.lastService) {
+      const lsEl = document.getElementById('machineLastService');
+      if (lsEl) lsEl.textContent = data.lastService;
+    }
+    if (data.nextService) {
+      const nsEl = document.getElementById('machineNextService');
+      if (nsEl) nsEl.textContent = data.nextService;
+    }
+
+    // Risk
+    if (typeof data.risk === 'number') {
+      const pctEl = document.getElementById('machineRiskPct');
+      if (pctEl) {
+        pctEl.textContent = '%' + data.risk;
+        let color = 'var(--accent)';
+        if (data.risk > 60) color = 'var(--danger)';
+        else if (data.risk >= 40) color = 'var(--warn)';
+        else color = 'var(--ok, #2D8A3E)';
+        pctEl.style.color = color;
+      }
+      const subEl = document.getElementById('machineRiskSub');
+      if (subEl && typeof data.faultCount === 'number') {
+        subEl.textContent = data.faultCount + ' arıza geçmişine göre hesaplandı';
+      }
+    }
+    if (data.riskDate) {
+      const rdEl = document.getElementById('machineRiskDate');
+      if (rdEl) rdEl.textContent = data.riskDate;
+    }
+
+    // Logs
+    const logList = document.getElementById('machineLogList');
+    const logSub = document.getElementById('machineLogSub');
+    if (logList) {
+      if (Array.isArray(data.logs) && data.logs.length > 0) {
+        logList.innerHTML = data.logs.map(l => `
+          <div class="log">
+            <div class="log-date">${l.date || ''}</div>
+            <div class="log-what">${l.what || ''}</div>
+            <div class="log-dur">${l.dur || ''}</div>
+          </div>
+        `).join('');
+        if (logSub) logSub.textContent = 'Son ' + data.logs.length + ' işlem';
+      } else {
+        logList.innerHTML = '<div style="font-size:13px; color:var(--text-3); padding:8px 0;">Kayıtlı işlem yok</div>';
+        if (logSub) logSub.textContent = 'Kayıt yok';
+      }
+    }
 
     showScreen('machine');
     setTab(0);
