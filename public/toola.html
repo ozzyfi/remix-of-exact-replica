@@ -3296,17 +3296,20 @@
     }
   };
 
-  window.callDiagnose = async function({ question, history = [], mode, woId = null }) {
+  window.callDiagnose = async function({ question, history = [], mode, woId = null, imageBase64 = null, imageMediaType = null }) {
     const state = window.__APP_STATE__ || {};
     const region = state.region || 'Marmara';
     const detectedMode = mode || (/H-\d+|P-\d+|alarm|arıza|basınç|pompa/i.test(question) ? 'diagnosis' : 'info');
     const corrections = await window.fetchCorrections(region);
 
+    const finalImage = imageBase64 || (typeof evState !== 'undefined' ? evState.imageBase64 : null);
+    const finalMediaType = imageMediaType || (typeof evState !== 'undefined' ? evState.imageMediaType : null);
+
     const { data, error } = await supabase.functions.invoke('diagnose', {
       body: {
         question,
-        image_base64: null,
-        image_media_type: null,
+        image_base64: finalImage || null,
+        image_media_type: finalMediaType || null,
         region,
         corrections,
         history,
@@ -4628,6 +4631,16 @@
             <div class="ev-card-icon">📷</div>
             <div class="ev-card-label">Fotoğraf</div>
             <input type="file" id="evFile-photo" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'photo')">
+          </div>
+          <div class="ev-card" id="evCard-thermal" onclick="evTriggerFile('thermal')">
+            <div class="ev-card-icon">🌡️</div>
+            <div class="ev-card-label">Termal</div>
+            <input type="file" id="evFile-thermal" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'thermal')">
+          </div>
+          <div class="ev-card" id="evCard-label" onclick="evTriggerFile('label')">
+            <div class="ev-card-icon">🏷️</div>
+            <div class="ev-card-label">Etiket / Seri No</div>
+            <input type="file" id="evFile-label" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'label')">
           </div>
           <div class="ev-card" id="evCard-audio" onclick="evToggleAudio()">
             <div class="ev-card-icon">🎙</div>
@@ -6081,11 +6094,16 @@
   let conversationHistory = [];
 
   function extractContext(text) {
-    const t = text.toLowerCase();
-    if (t.includes('bsf 36') || t.includes('h-201')) return 'BSF 36';
-    if (t.includes('bsa 1005') || t.includes('p-105')) return 'BSA 1005';
-    if (t.includes('bsf 42') || t.includes('b-310')) return 'BSF 42';
-    return 'BSF 36'; // default
+    if (typeof evState !== 'undefined' && evState.equipment) {
+      return evState.equipment;
+    }
+    const t = text;
+    const codeMatch = t.match(/\b([A-Z]{2,4}[\s-]?\d{2,4}[A-Z0-9\-\.]*)\b/);
+    if (codeMatch) return codeMatch[1];
+    if (typeof currentMachine !== 'undefined' && currentMachine && currentMachine.name) {
+      return currentMachine.name;
+    }
+    return 'Ekipman';
   }
 
   // ===== FOLLOWUP SYSTEM =====
@@ -6907,10 +6925,16 @@
     audioRecording: false,
     audioTimer: null,
     audioStart: 0,
+    imageBase64: null,
+    imageMediaType: null,
+    audioBlob: null,
   };
 
   function openEvidence(opts = {}) {
     evState.items = [];
+    evState.imageBase64 = null;
+    evState.imageMediaType = null;
+    evState.audioBlob = null;
     evState.required = opts.required || ['photo','error','measure'];
     evState.returnTo = opts.returnTo || 'job';
     evState.equipment = opts.equipment || 'BSF 36-4.16H';
@@ -6926,12 +6950,12 @@
       evState.required.map(r => iconMap[r] || '•').join(' ');
 
     // Reset cards
-    ['photo','audio','video','measure','error','note'].forEach(t => {
+    ['photo','thermal','label','audio','video','measure','error','note'].forEach(t => {
       const c = document.getElementById('evCard-' + t);
       if (c) {
         c.classList.remove('done','active','recording');
         const lbl = c.querySelector('.ev-card-label');
-        const orig = { photo:'Fotoğraf', audio:'Ses Kaydı', video:'Video', measure:'Ölçüm', error:'Hata Kodu', note:'Not' }[t];
+        const orig = { photo:'Fotoğraf', thermal:'Termal', label:'Etiket / Seri No', audio:'Ses Kaydı', video:'Video', measure:'Ölçüm', error:'Hata Kodu', note:'Not' }[t];
         if (lbl) lbl.textContent = orig;
         c.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
       }
@@ -6991,7 +7015,7 @@
     }
 
     // Card done states
-    ['photo','audio','video','measure','error','note'].forEach(t => {
+    ['photo','thermal','label','audio','video','measure','error','note'].forEach(t => {
       const card = document.getElementById('evCard-' + t);
       if (!card) return;
       const has = haveTypes.has(t);
@@ -7019,9 +7043,34 @@
     const f = e.target.files && e.target.files[0];
     if (!f) return;
     if (type === 'photo') {
-      const url = URL.createObjectURL(f);
-      evAdd({ type:'photo', label:'Fotoğraf', thumb:url });
-    } else {
+      const objectUrl = URL.createObjectURL(f);
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const dataUrl = ev.target.result;
+        evState.imageBase64 = dataUrl.split(',')[1];
+        evState.imageMediaType = f.type || 'image/jpeg';
+      };
+      reader.readAsDataURL(f);
+      evAdd({ type:'photo', label:'Fotoğraf', thumb: objectUrl });
+    } else if (type === 'thermal') {
+      const objectUrl = URL.createObjectURL(f);
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        evState.imageBase64 = ev.target.result.split(',')[1];
+        evState.imageMediaType = f.type || 'image/jpeg';
+      };
+      reader.readAsDataURL(f);
+      evAdd({ type:'thermal', label:'🌡️ Termal görüntü', thumb: objectUrl });
+    } else if (type === 'label') {
+      const objectUrl = URL.createObjectURL(f);
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        evState.imageBase64 = ev.target.result.split(',')[1];
+        evState.imageMediaType = f.type || 'image/jpeg';
+      };
+      reader.readAsDataURL(f);
+      evAdd({ type:'label', label:'🏷️ Etiket / Seri No', thumb: objectUrl });
+    } else if (type === 'video') {
       evAdd({ type:'video', label:'🎥 Video (' + Math.round(f.size/1024) + ' KB)' });
     }
     e.target.value = '';
@@ -7038,6 +7087,9 @@
   function evStartAudio() {
     evState.audioRecording = true;
     evState.audioStart = Date.now();
+    evState._mediaChunks = [];
+    evState._mediaRecorder = null;
+
     const card = document.getElementById('evCard-audio');
     card.classList.add('active','recording');
 
@@ -7064,6 +7116,22 @@
       timer.textContent = mm + ':' + ss;
       if (sec >= 30) evStopAudio();
     }, 250);
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(stream) {
+          evState._stream = stream;
+          const mr = new MediaRecorder(stream);
+          evState._mediaRecorder = mr;
+          mr.ondataavailable = function(e) {
+            if (e.data && e.data.size > 0) evState._mediaChunks.push(e.data);
+          };
+          mr.start(200);
+        })
+        .catch(function(err) {
+          console.warn('[ToolA] Mikrofon erişimi reddedildi:', err);
+        });
+    }
   }
 
   function evStopAudio() {
@@ -7071,12 +7139,31 @@
     const sec = Math.min(30, Math.floor((Date.now() - evState.audioStart) / 1000));
     clearInterval(evState.audioTimer);
     evState.audioRecording = false;
+
     const card = document.getElementById('evCard-audio');
     card.classList.remove('active','recording');
     card.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
     const lbl = card.querySelector('.ev-card-label');
     lbl.textContent = 'Ses Kaydı';
     const dur = Math.max(1, sec);
+
+    if (evState._mediaRecorder && evState._mediaRecorder.state !== 'inactive') {
+      evState._mediaRecorder.onstop = function() {
+        const blob = new Blob(evState._mediaChunks, { type: 'audio/webm' });
+        evState.audioBlob = blob;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          evState.audioBase64 = ev.target.result.split(',')[1];
+        };
+        reader.readAsDataURL(blob);
+      };
+      evState._mediaRecorder.stop();
+    }
+    if (evState._stream) {
+      evState._stream.getTracks().forEach(t => t.stop());
+      evState._stream = null;
+    }
+
     evAdd({ type:'audio', label:`🎙 ${dur}s ses kaydı` });
   }
 
@@ -7131,6 +7218,8 @@
     // Tip → {icon,label} eşleme
     const evIconMap = {
       photo:     { icon: '📷',  label: 'Fotoğraf' },
+      thermal:   { icon: '🌡️', label: 'Termal görüntü' },
+      label:     { icon: '🏷️', label: 'Etiket / Seri No' },
       audio:     { icon: '🎙',  label: 'Ses kaydı' },
       video:     { icon: '🎥',  label: 'Video' },
       measure:   { icon: '📏',  label: 'Ölçüm' },
@@ -7152,9 +7241,29 @@
       sessionStorage.setItem('lastEvidence', JSON.stringify(persisted));
     } catch (e) { /* sessionStorage erişim hatası — sessizce geç */ }
 
+    // Fotoğraf base64'ü teşhis bittikten sonra temizle (bellek için)
+    setTimeout(function() {
+      if (typeof evState !== 'undefined') {
+        evState.imageBase64 = null;
+        evState.imageMediaType = null;
+        evState.audioBlob = null;
+        evState.audioBase64 = null;
+      }
+    }, 5000);
+
     // Try to route to existing diagnosis flow, otherwise show loading
     const summary = evState.items.map(i => i.label).join(' · ');
-    const fullTitle = evState.title + ' — Kanıtlar: ' + summary;
+
+    // Görselin tipini (termal/etiket/normal fotoğraf) teşhis sorusuna ekle
+    const thermalItem = evState.items.find(i => i.type === 'thermal');
+    const labelItem = evState.items.find(i => i.type === 'label');
+    const photoItem = evState.items.find(i => i.type === 'photo');
+    let visualContext = '';
+    if (thermalItem) visualContext = ' [Termal kamera görüntüsü eklendi — sıcaklık anomalisi analiz et]';
+    else if (labelItem) visualContext = ' [Etiket/seri no fotoğrafı eklendi — ekipman bilgilerini oku]';
+    else if (photoItem) visualContext = ' [Fotoğraf eklendi — görsel inceleme yap]';
+
+    const fullTitle = evState.title + visualContext + ' — Kanıtlar: ' + summary;
 
     if (typeof startDiagnosis === 'function') {
       startDiagnosis(fullTitle, evState.woId || null);
@@ -7209,6 +7318,7 @@
   window.evSaveError = evSaveError;
   window.evSaveNote = evSaveNote;
   window.evRemove = evRemove;
+  window.getEvState = function() { return evState; };
   window.evSubmit = evSubmit;
 
   document.addEventListener('gesturestart', e => e.preventDefault());
