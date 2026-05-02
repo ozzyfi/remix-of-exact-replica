@@ -7245,8 +7245,7 @@
     // Fotoğraf base64'ü teşhis bittikten sonra temizle (bellek için)
     setTimeout(function() {
       if (typeof evState !== 'undefined') {
-        evState.imageBase64 = null;
-        evState.imageMediaType = null;
+        evState.images = [];
         evState.audioBlob = null;
         evState.audioBase64 = null;
       }
