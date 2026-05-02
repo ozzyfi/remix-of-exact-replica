@@ -7069,6 +7069,9 @@
   function evStartAudio() {
     evState.audioRecording = true;
     evState.audioStart = Date.now();
+    evState._mediaChunks = [];
+    evState._mediaRecorder = null;
+
     const card = document.getElementById('evCard-audio');
     card.classList.add('active','recording');
 
@@ -7095,6 +7098,22 @@
       timer.textContent = mm + ':' + ss;
       if (sec >= 30) evStopAudio();
     }, 250);
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(function(stream) {
+          evState._stream = stream;
+          const mr = new MediaRecorder(stream);
+          evState._mediaRecorder = mr;
+          mr.ondataavailable = function(e) {
+            if (e.data && e.data.size > 0) evState._mediaChunks.push(e.data);
+          };
+          mr.start(200);
+        })
+        .catch(function(err) {
+          console.warn('[ToolA] Mikrofon erişimi reddedildi:', err);
+        });
+    }
   }
 
   function evStopAudio() {
