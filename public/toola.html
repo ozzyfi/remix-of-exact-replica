@@ -7121,12 +7121,31 @@
     const sec = Math.min(30, Math.floor((Date.now() - evState.audioStart) / 1000));
     clearInterval(evState.audioTimer);
     evState.audioRecording = false;
+
     const card = document.getElementById('evCard-audio');
     card.classList.remove('active','recording');
     card.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
     const lbl = card.querySelector('.ev-card-label');
     lbl.textContent = 'Ses Kaydı';
     const dur = Math.max(1, sec);
+
+    if (evState._mediaRecorder && evState._mediaRecorder.state !== 'inactive') {
+      evState._mediaRecorder.onstop = function() {
+        const blob = new Blob(evState._mediaChunks, { type: 'audio/webm' });
+        evState.audioBlob = blob;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          evState.audioBase64 = ev.target.result.split(',')[1];
+        };
+        reader.readAsDataURL(blob);
+      };
+      evState._mediaRecorder.stop();
+    }
+    if (evState._stream) {
+      evState._stream.getTracks().forEach(t => t.stop());
+      evState._stream = null;
+    }
+
     evAdd({ type:'audio', label:`🎙 ${dur}s ses kaydı` });
   }
 
