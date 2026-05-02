@@ -4632,6 +4632,16 @@
             <div class="ev-card-label">Fotoğraf</div>
             <input type="file" id="evFile-photo" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'photo')">
           </div>
+          <div class="ev-card" id="evCard-thermal" onclick="evTriggerFile('thermal')">
+            <div class="ev-card-icon">🌡️</div>
+            <div class="ev-card-label">Termal</div>
+            <input type="file" id="evFile-thermal" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'thermal')">
+          </div>
+          <div class="ev-card" id="evCard-label" onclick="evTriggerFile('label')">
+            <div class="ev-card-icon">🏷️</div>
+            <div class="ev-card-label">Etiket / Seri No</div>
+            <input type="file" id="evFile-label" accept="image/*" capture="environment" style="display:none" onchange="evHandleFile(event,'label')">
+          </div>
           <div class="ev-card" id="evCard-audio" onclick="evToggleAudio()">
             <div class="ev-card-icon">🎙</div>
             <div class="ev-card-label">Ses Kaydı</div>
