@@ -3296,20 +3296,23 @@
     }
   };
 
-  window.callDiagnose = async function({ question, history = [], mode, woId = null, imageBase64 = null, imageMediaType = null }) {
+  window.callDiagnose = async function({ question, history = [], mode, woId = null }) {
     const state = window.__APP_STATE__ || {};
     const region = state.region || 'Marmara';
     const detectedMode = mode || (/H-\d+|P-\d+|alarm|arıza|basınç|pompa/i.test(question) ? 'diagnosis' : 'info');
     const corrections = await window.fetchCorrections(region);
 
-    const finalImage = imageBase64 || (typeof evState !== 'undefined' ? evState.imageBase64 : null);
-    const finalMediaType = imageMediaType || (typeof evState !== 'undefined' ? evState.imageMediaType : null);
+    // evState'den tüm görselleri al
+    const images = (typeof evState !== 'undefined' && evState.images && evState.images.length)
+      ? evState.images.map(img => ({ base64: img.base64, media_type: img.mediaType, type: img.type }))
+      : [];
 
     const { data, error } = await supabase.functions.invoke('diagnose', {
       body: {
         question,
-        image_base64: finalImage || null,
-        image_media_type: finalMediaType || null,
+        images,
+        image_base64: images[0]?.base64 || null,
+        image_media_type: images[0]?.mediaType || null,
         region,
         corrections,
         history,
