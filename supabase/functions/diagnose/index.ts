@@ -285,17 +285,15 @@ Deno.serve(async (req: Request) => {
     }
 
     if (hasImage) {
-      const mt = image_media_type || "image/jpeg";
-      const dataUrl = image_base64!.startsWith("data:")
-        ? image_base64
-        : `data:${mt};base64,${image_base64}`;
-      messages.push({
-        role: "user",
-        content: [
-          { type: "text", text: question },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      });
+      const contentParts: any[] = [{ type: "text", text: question }];
+      for (const img of allImages) {
+        const mt = img.media_type || "image/jpeg";
+        const dataUrl = img.base64.startsWith("data:")
+          ? img.base64
+          : `data:${mt};base64,${img.base64}`;
+        contentParts.push({ type: "image_url", image_url: { url: dataUrl } });
+      }
+      messages.push({ role: "user", content: contentParts });
     } else {
       messages.push({ role: "user", content: question });
     }
