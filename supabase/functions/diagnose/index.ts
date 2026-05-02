@@ -164,9 +164,12 @@ function buildSystemPrompt(opts: {
     );
   }
   if (opts.hasImage) {
-    parts.push(
-      "Teknisyen bir şema veya fotoğraf paylaştı. Görseli analiz ederek teşhise dahil et. Görselde gördüklerini kısaca açıkla.",
-    );
+    const count = opts.imageCount || 1;
+    if (count === 1) {
+      parts.push("Teknisyen bir fotoğraf/görsel paylaştı. Görseli analiz ederek teşhise dahil et. Görselde gördüklerini kısaca açıkla.");
+    } else {
+      parts.push(`Teknisyen ${count} adet görsel paylaştı (fotoğraf, termal, etiket vb.). Tüm görselleri birlikte analiz et, her görselden ne anladığını kısaca belirt ve teşhise dahil et.`);
+    }
   }
   return parts.join("\n\n");
 }
