@@ -6094,11 +6094,16 @@
   let conversationHistory = [];
 
   function extractContext(text) {
-    const t = text.toLowerCase();
-    if (t.includes('bsf 36') || t.includes('h-201')) return 'BSF 36';
-    if (t.includes('bsa 1005') || t.includes('p-105')) return 'BSA 1005';
-    if (t.includes('bsf 42') || t.includes('b-310')) return 'BSF 42';
-    return 'BSF 36'; // default
+    if (typeof evState !== 'undefined' && evState.equipment) {
+      return evState.equipment;
+    }
+    const t = text;
+    const codeMatch = t.match(/\b([A-Z]{2,4}[\s-]?\d{2,4}[A-Z0-9\-\.]*)\b/);
+    if (codeMatch) return codeMatch[1];
+    if (typeof currentMachine !== 'undefined' && currentMachine && currentMachine.name) {
+      return currentMachine.name;
+    }
+    return 'Ekipman';
   }
 
   // ===== FOLLOWUP SYSTEM =====
