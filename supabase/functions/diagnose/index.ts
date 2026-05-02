@@ -264,7 +264,7 @@ Deno.serve(async (req: Request) => {
     const correctionBlock = buildCorrectionBlock(corrections);
 
     // ADIM 3 + 4 — system prompt
-    const hasImage = !!image_base64;
+    const hasImage = allImages.length > 0;
     const systemPrompt = buildSystemPrompt({
       ustaName: usta.name,
       persona: usta.persona_md,
@@ -272,6 +272,7 @@ Deno.serve(async (req: Request) => {
       correctionBlock,
       mode,
       hasImage,
+      imageCount: allImages.length,
     });
 
     // Mesajlar (OpenAI/Gemini uyumlu format)
