@@ -198,6 +198,7 @@ Deno.serve(async (req: Request) => {
     const body = (await req.json()) as ReqBody;
     const {
       question,
+      images = [],
       image_base64,
       image_media_type,
       region,
@@ -206,6 +207,11 @@ Deno.serve(async (req: Request) => {
       mode,
       wo_id,
     } = body;
+
+    // images array varsa kullan, yoksa eski tekil image_base64'e düş
+    const allImages: EvidenceImage[] = images.length > 0
+      ? images
+      : (image_base64 ? [{ base64: image_base64, media_type: image_media_type || "image/jpeg", type: "photo" }] : []);
 
     if (!question || !region || !mode) {
       return json(200, { type: "raw", text: "question, region, mode zorunlu", error: "bad_request" });
