@@ -7031,6 +7031,7 @@
 
   function evRemove(id) {
     evState.items = evState.items.filter(i => i.id !== id);
+    evState.images = evState.images.filter(i => i.itemId !== id);
     evRender();
   }
 
@@ -7042,36 +7043,33 @@
   function evHandleFile(e, type) {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
-    if (type === 'photo') {
+
+    const isImage = (type === 'photo' || type === 'thermal' || type === 'label');
+
+    if (isImage) {
       const objectUrl = URL.createObjectURL(f);
+      const itemId = 'ev-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+      const labelMap = { photo: 'Fotoğraf', thermal: '🌡️ Termal görüntü', label: '🏷️ Etiket / Seri No' };
+
       const reader = new FileReader();
       reader.onload = function(ev) {
         const dataUrl = ev.target.result;
-        evState.imageBase64 = dataUrl.split(',')[1];
-        evState.imageMediaType = f.type || 'image/jpeg';
+        evState.images.push({
+          itemId,
+          base64: dataUrl.split(',')[1],
+          mediaType: f.type || 'image/jpeg',
+          type,
+          file: f,
+          objectUrl,
+        });
       };
       reader.readAsDataURL(f);
-      evAdd({ type:'photo', label:'Fotoğraf', thumb: objectUrl });
-    } else if (type === 'thermal') {
-      const objectUrl = URL.createObjectURL(f);
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        evState.imageBase64 = ev.target.result.split(',')[1];
-        evState.imageMediaType = f.type || 'image/jpeg';
-      };
-      reader.readAsDataURL(f);
-      evAdd({ type:'thermal', label:'🌡️ Termal görüntü', thumb: objectUrl });
-    } else if (type === 'label') {
-      const objectUrl = URL.createObjectURL(f);
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        evState.imageBase64 = ev.target.result.split(',')[1];
-        evState.imageMediaType = f.type || 'image/jpeg';
-      };
-      reader.readAsDataURL(f);
-      evAdd({ type:'label', label:'🏷️ Etiket / Seri No', thumb: objectUrl });
+
+      evState.items.push({ id: itemId, type, label: labelMap[type] || type, thumb: objectUrl });
+      evRender();
+
     } else if (type === 'video') {
-      evAdd({ type:'video', label:'🎥 Video (' + Math.round(f.size/1024) + ' KB)' });
+      evAdd({ type: 'video', label: '🎥 Video (' + Math.round(f.size/1024) + ' KB)' });
     }
     e.target.value = '';
   }
