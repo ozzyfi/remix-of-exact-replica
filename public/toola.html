@@ -7265,6 +7265,38 @@
 
     const fullTitle = evState.title + visualContext + ' — Kanıtlar: ' + summary;
 
+    // Fotoğrafları Supabase Storage'a yükle (demo değilse)
+    const state = window.__APP_STATE__ || {};
+    const uploadedUrls = [];
+    if (!state.isDemo && state.userId && evState.images && evState.images.length) {
+      for (const img of evState.images) {
+        try {
+          const path = `${state.userId}/${evState.woId || 'no-wo'}/${img.itemId}.jpg`;
+          const { error: upErr } = await supabase.storage
+            .from('evidence-photos')
+            .upload(path, img.file, { contentType: img.mediaType, upsert: true });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage
+              .from('evidence-photos')
+              .getPublicUrl(path);
+            if (urlData?.publicUrl) uploadedUrls.push({ type: img.type, url: urlData.publicUrl });
+          }
+        } catch (uploadErr) {
+          console.warn('[ToolA] fotoğraf yükleme hatası:', uploadErr);
+        }
+      }
+
+      if (uploadedUrls.length && evState.woId) {
+        try {
+          await supabase.from('work_orders')
+            .update({ evidence_photo_urls: uploadedUrls })
+            .eq('code', evState.woId);
+        } catch (dbErr) {
+          console.warn('[ToolA] evidence_photo_urls güncelleme hatası:', dbErr);
+        }
+      }
+    }
+
     if (typeof startDiagnosis === 'function') {
       startDiagnosis(fullTitle, evState.woId || null);
     } else {
