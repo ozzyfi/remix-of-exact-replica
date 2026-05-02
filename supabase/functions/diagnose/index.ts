@@ -21,8 +21,15 @@ interface HistoryMsg {
   content: string;
 }
 
+interface EvidenceImage {
+  base64: string;
+  media_type: string;
+  type: "photo" | "thermal" | "label" | string;
+}
+
 interface ReqBody {
   question: string;
+  images?: EvidenceImage[];
   image_base64?: string | null;
   image_media_type?: string | null;
   region: string;
@@ -131,6 +138,7 @@ function buildSystemPrompt(opts: {
   correctionBlock: string;
   mode: Mode;
   hasImage: boolean;
+  imageCount?: number;
 }) {
   const parts: string[] = [];
   parts.push(`Sen ${opts.ustaName} adlı deneyimli bir endüstriyel bakım ustasısın.`);
@@ -156,9 +164,12 @@ function buildSystemPrompt(opts: {
     );
   }
   if (opts.hasImage) {
-    parts.push(
-      "Teknisyen bir şema veya fotoğraf paylaştı. Görseli analiz ederek teşhise dahil et. Görselde gördüklerini kısaca açıkla.",
-    );
+    const count = opts.imageCount || 1;
+    if (count === 1) {
+      parts.push("Teknisyen bir fotoğraf/görsel paylaştı. Görseli analiz ederek teşhise dahil et. Görselde gördüklerini kısaca açıkla.");
+    } else {
+      parts.push(`Teknisyen ${count} adet görsel paylaştı (fotoğraf, termal, etiket vb.). Tüm görselleri birlikte analiz et, her görselden ne anladığını kısaca belirt ve teşhise dahil et.`);
+    }
   }
   return parts.join("\n\n");
 }
@@ -187,6 +198,7 @@ Deno.serve(async (req: Request) => {
     const body = (await req.json()) as ReqBody;
     const {
       question,
+      images = [],
       image_base64,
       image_media_type,
       region,
@@ -195,6 +207,11 @@ Deno.serve(async (req: Request) => {
       mode,
       wo_id,
     } = body;
+
+    // images array varsa kullan, yoksa eski tekil image_base64'e düş
+    const allImages: EvidenceImage[] = images.length > 0
+      ? images
+      : (image_base64 ? [{ base64: image_base64, media_type: image_media_type || "image/jpeg", type: "photo" }] : []);
 
     if (!question || !region || !mode) {
       return json(200, { type: "raw", text: "question, region, mode zorunlu", error: "bad_request" });
@@ -247,7 +264,7 @@ Deno.serve(async (req: Request) => {
     const correctionBlock = buildCorrectionBlock(corrections);
 
     // ADIM 3 + 4 — system prompt
-    const hasImage = !!image_base64;
+    const hasImage = allImages.length > 0;
     const systemPrompt = buildSystemPrompt({
       ustaName: usta.name,
       persona: usta.persona_md,
@@ -255,6 +272,7 @@ Deno.serve(async (req: Request) => {
       correctionBlock,
       mode,
       hasImage,
+      imageCount: allImages.length,
     });
 
     // Mesajlar (OpenAI/Gemini uyumlu format)
@@ -267,17 +285,15 @@ Deno.serve(async (req: Request) => {
     }
 
     if (hasImage) {
-      const mt = image_media_type || "image/jpeg";
-      const dataUrl = image_base64!.startsWith("data:")
-        ? image_base64
-        : `data:${mt};base64,${image_base64}`;
-      messages.push({
-        role: "user",
-        content: [
-          { type: "text", text: question },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      });
+      const contentParts: any[] = [{ type: "text", text: question }];
+      for (const img of allImages) {
+        const mt = img.media_type || "image/jpeg";
+        const dataUrl = img.base64.startsWith("data:")
+          ? img.base64
+          : `data:${mt};base64,${img.base64}`;
+        contentParts.push({ type: "image_url", image_url: { url: dataUrl } });
+      }
+      messages.push({ role: "user", content: contentParts });
     } else {
       messages.push({ role: "user", content: question });
     }

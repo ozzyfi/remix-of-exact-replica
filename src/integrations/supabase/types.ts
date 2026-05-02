@@ -645,6 +645,7 @@ export type Database = {
           created_at: string
           description: string | null
           district: string | null
+          evidence_photo_urls: Json | null
           id: string
           machine_id: string | null
           region: string | null
@@ -664,6 +665,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           district?: string | null
+          evidence_photo_urls?: Json | null
           id?: string
           machine_id?: string | null
           region?: string | null
@@ -683,6 +685,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           district?: string | null
+          evidence_photo_urls?: Json | null
           id?: string
           machine_id?: string | null
           region?: string | null
