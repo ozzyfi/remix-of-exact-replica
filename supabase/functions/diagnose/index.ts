@@ -21,8 +21,15 @@ interface HistoryMsg {
   content: string;
 }
 
+interface EvidenceImage {
+  base64: string;
+  media_type: string;
+  type: "photo" | "thermal" | "label" | string;
+}
+
 interface ReqBody {
   question: string;
+  images?: EvidenceImage[];
   image_base64?: string | null;
   image_media_type?: string | null;
   region: string;
