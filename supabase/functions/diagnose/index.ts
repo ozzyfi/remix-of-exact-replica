@@ -138,6 +138,7 @@ function buildSystemPrompt(opts: {
   correctionBlock: string;
   mode: Mode;
   hasImage: boolean;
+  imageCount?: number;
 }) {
   const parts: string[] = [];
   parts.push(`Sen ${opts.ustaName} adlı deneyimli bir endüstriyel bakım ustasısın.`);
