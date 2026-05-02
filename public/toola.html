@@ -7218,6 +7218,8 @@
     // Tip → {icon,label} eşleme
     const evIconMap = {
       photo:     { icon: '📷',  label: 'Fotoğraf' },
+      thermal:   { icon: '🌡️', label: 'Termal görüntü' },
+      label:     { icon: '🏷️', label: 'Etiket / Seri No' },
       audio:     { icon: '🎙',  label: 'Ses kaydı' },
       video:     { icon: '🎥',  label: 'Video' },
       measure:   { icon: '📏',  label: 'Ölçüm' },
@@ -7239,9 +7241,29 @@
       sessionStorage.setItem('lastEvidence', JSON.stringify(persisted));
     } catch (e) { /* sessionStorage erişim hatası — sessizce geç */ }
 
+    // Fotoğraf base64'ü teşhis bittikten sonra temizle (bellek için)
+    setTimeout(function() {
+      if (typeof evState !== 'undefined') {
+        evState.imageBase64 = null;
+        evState.imageMediaType = null;
+        evState.audioBlob = null;
+        evState.audioBase64 = null;
+      }
+    }, 5000);
+
     // Try to route to existing diagnosis flow, otherwise show loading
     const summary = evState.items.map(i => i.label).join(' · ');
-    const fullTitle = evState.title + ' — Kanıtlar: ' + summary;
+
+    // Görselin tipini (termal/etiket/normal fotoğraf) teşhis sorusuna ekle
+    const thermalItem = evState.items.find(i => i.type === 'thermal');
+    const labelItem = evState.items.find(i => i.type === 'label');
+    const photoItem = evState.items.find(i => i.type === 'photo');
+    let visualContext = '';
+    if (thermalItem) visualContext = ' [Termal kamera görüntüsü eklendi — sıcaklık anomalisi analiz et]';
+    else if (labelItem) visualContext = ' [Etiket/seri no fotoğrafı eklendi — ekipman bilgilerini oku]';
+    else if (photoItem) visualContext = ' [Fotoğraf eklendi — görsel inceleme yap]';
+
+    const fullTitle = evState.title + visualContext + ' — Kanıtlar: ' + summary;
 
     if (typeof startDiagnosis === 'function') {
       startDiagnosis(fullTitle, evState.woId || null);
