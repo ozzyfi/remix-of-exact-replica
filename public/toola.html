@@ -6914,6 +6914,9 @@
 
   function openEvidence(opts = {}) {
     evState.items = [];
+    evState.imageBase64 = null;
+    evState.imageMediaType = null;
+    evState.audioBlob = null;
     evState.required = opts.required || ['photo','error','measure'];
     evState.returnTo = opts.returnTo || 'job';
     evState.equipment = opts.equipment || 'BSF 36-4.16H';
@@ -6929,12 +6932,12 @@
       evState.required.map(r => iconMap[r] || '•').join(' ');
 
     // Reset cards
-    ['photo','audio','video','measure','error','note'].forEach(t => {
+    ['photo','thermal','label','audio','video','measure','error','note'].forEach(t => {
       const c = document.getElementById('evCard-' + t);
       if (c) {
         c.classList.remove('done','active','recording');
         const lbl = c.querySelector('.ev-card-label');
-        const orig = { photo:'Fotoğraf', audio:'Ses Kaydı', video:'Video', measure:'Ölçüm', error:'Hata Kodu', note:'Not' }[t];
+        const orig = { photo:'Fotoğraf', thermal:'Termal', label:'Etiket / Seri No', audio:'Ses Kaydı', video:'Video', measure:'Ölçüm', error:'Hata Kodu', note:'Not' }[t];
         if (lbl) lbl.textContent = orig;
         c.querySelectorAll('.ev-rec-dot, .ev-rec-timer, .ev-wave').forEach(n => n.remove());
       }
