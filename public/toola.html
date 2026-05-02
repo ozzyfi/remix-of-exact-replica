@@ -7025,9 +7025,34 @@
     const f = e.target.files && e.target.files[0];
     if (!f) return;
     if (type === 'photo') {
-      const url = URL.createObjectURL(f);
-      evAdd({ type:'photo', label:'Fotoğraf', thumb:url });
-    } else {
+      const objectUrl = URL.createObjectURL(f);
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const dataUrl = ev.target.result;
+        evState.imageBase64 = dataUrl.split(',')[1];
+        evState.imageMediaType = f.type || 'image/jpeg';
+      };
+      reader.readAsDataURL(f);
+      evAdd({ type:'photo', label:'Fotoğraf', thumb: objectUrl });
+    } else if (type === 'thermal') {
+      const objectUrl = URL.createObjectURL(f);
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        evState.imageBase64 = ev.target.result.split(',')[1];
+        evState.imageMediaType = f.type || 'image/jpeg';
+      };
+      reader.readAsDataURL(f);
+      evAdd({ type:'thermal', label:'🌡️ Termal görüntü', thumb: objectUrl });
+    } else if (type === 'label') {
+      const objectUrl = URL.createObjectURL(f);
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        evState.imageBase64 = ev.target.result.split(',')[1];
+        evState.imageMediaType = f.type || 'image/jpeg';
+      };
+      reader.readAsDataURL(f);
+      evAdd({ type:'label', label:'🏷️ Etiket / Seri No', thumb: objectUrl });
+    } else if (type === 'video') {
       evAdd({ type:'video', label:'🎥 Video (' + Math.round(f.size/1024) + ' KB)' });
     }
     e.target.value = '';
