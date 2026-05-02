@@ -6925,16 +6925,16 @@
     audioRecording: false,
     audioTimer: null,
     audioStart: 0,
-    imageBase64: null,
-    imageMediaType: null,
+    images: [],        // [{base64, mediaType, type, itemId}] — tüm görseller array
     audioBlob: null,
+    audioBase64: null,
   };
 
   function openEvidence(opts = {}) {
     evState.items = [];
-    evState.imageBase64 = null;
-    evState.imageMediaType = null;
+    evState.images = [];
     evState.audioBlob = null;
+    evState.audioBase64 = null;
     evState.required = opts.required || ['photo','error','measure'];
     evState.returnTo = opts.returnTo || 'job';
     evState.equipment = opts.equipment || 'BSF 36-4.16H';
