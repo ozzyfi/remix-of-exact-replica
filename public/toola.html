@@ -6996,15 +6996,15 @@
     if (allRequired) {
       btn.classList.add('ready');
       btn.disabled = false;
-      btn.textContent = `Teşhis Al → (${evState.items.length} kanıt)`;
+      btn.textContent = `Kanıtları İşe Bağla → (${evState.items.length} kanıt)`;
     } else {
       btn.classList.remove('ready');
       btn.disabled = true;
-      btn.textContent = 'Teşhis Al →';
+      btn.textContent = 'Kanıtları İşe Bağla →';
     }
 
     // Card done states
-    ['photo','thermal','label','audio','video','measure','error','note'].forEach(t => {
+    ['photo','thermal','label','audio','video','measure','error'].forEach(t => {
       const card = document.getElementById('evCard-' + t);
       if (!card) return;
       const has = haveTypes.has(t);
