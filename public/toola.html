@@ -7367,6 +7367,43 @@
   window.getEvState = function() { return evState; };
   window.evSubmit = evSubmit;
 
+  // Kanıtları aktif iş emrine bağla ve s-job ekranına dön
+  function evAttachToJob() {
+    const btn = document.getElementById('evCtaBtn');
+    if (btn && btn.disabled) return;
+    if (evState.audioRecording) evStopAudio();
+
+    const evIconMap = {
+      photo:     { icon: '📷',  label: 'Fotoğraf' },
+      thermal:   { icon: '🌡️', label: 'Termal görüntü' },
+      label:     { icon: '🏷️', label: 'Etiket / Seri No' },
+      audio:     { icon: '🎙',  label: 'Ses kaydı' },
+      video:     { icon: '🎥',  label: 'Video' },
+      measure:   { icon: '📏',  label: 'Ölçüm' },
+      error:     { icon: '⚠️', label: 'Hata kodu' }
+    };
+
+    const attached = evState.items.map(it => {
+      const fb = evIconMap[it.type] || { icon: '•', label: it.type || 'Kanıt' };
+      return {
+        type: it.type,
+        icon: fb.icon,
+        label: it.label || fb.label,
+        thumb: it.thumb || null
+      };
+    });
+
+    if (typeof currentJob !== 'undefined' && currentJob) {
+      currentJob.attachedEvidence = (currentJob.attachedEvidence || []).concat(attached);
+    }
+
+    showScreen('job');
+    setTab(0);
+    renderJobAttachedEvidence();
+    if (typeof showToast === 'function') showToast(attached.length + ' kanıt işe bağlandı');
+  }
+  window.evAttachToJob = evAttachToJob;
+
   document.addEventListener('gesturestart', e => e.preventDefault());
 </script>
 
