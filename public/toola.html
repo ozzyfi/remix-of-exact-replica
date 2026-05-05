@@ -4055,6 +4055,12 @@
         <div id="jobLogs"></div>
       </div>
 
+      <div class="section" id="jobAttachedEvidenceSection" style="display:none;">
+        <div class="section-title">Bağlanan kanıtlar</div>
+        <div class="section-sub" id="jobAttachedEvidenceCount">0 kanıt</div>
+        <div id="jobAttachedEvidenceList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div>
+      </div>
+
       <div class="bottom-bar" style="flex-direction:column; gap:8px;">
         <button class="btn btn-primary" id="jobBtnDiag" style="width:100%" onclick="jobStartDiag()">Teşhis Başlat</button>
         <div style="display:flex; gap:8px; width:100%">
@@ -4662,10 +4668,6 @@
             <div class="ev-card-icon">⚠️</div>
             <div class="ev-card-label">Hata Kodu</div>
           </div>
-          <div class="ev-card" id="evCard-note" onclick="evOpenSheet('note')">
-            <div class="ev-card-icon">📝</div>
-            <div class="ev-card-label">Not</div>
-          </div>
         </div>
 
         <div class="ev-preview-section">
@@ -4677,7 +4679,7 @@
       </div>
 
       <div class="ev-cta-bar">
-        <button class="ev-cta-btn" id="evCtaBtn" onclick="evSubmit()" disabled>Teşhis Al →</button>
+        <button class="ev-cta-btn" id="evCtaBtn" onclick="evAttachToJob()" disabled>Kanıtları İşe Bağla →</button>
       </div>
 
       <div class="ev-sheet-backdrop" id="evSheetBackdrop" onclick="evCloseSheet()"></div>
@@ -4707,16 +4709,6 @@
         </div>
       </div>
 
-      <div class="ev-sheet" id="evSheet-note">
-        <div class="ev-sheet-handle"></div>
-        <div class="ev-sheet-title">Not Ekle</div>
-        <textarea class="ev-sheet-input" id="evNoteInput" maxlength="280" placeholder="Gözlemini yaz..."></textarea>
-        <div class="ev-sheet-char-count"><span id="evNoteCount">0</span> / 280</div>
-        <div class="ev-sheet-actions">
-          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
-          <button class="ev-sheet-btn save" onclick="evSaveNote()">Kaydet</button>
-        </div>
-      </div>
 
       <div class="ev-loading" id="evLoading">
         <div class="ev-loading-spinner"></div>
@@ -5102,8 +5094,30 @@
       ).join('');
     }
 
+    renderJobAttachedEvidence();
     showScreen('job'); setTab(0);
   }
+
+  function renderJobAttachedEvidence() {
+    const section = document.getElementById('jobAttachedEvidenceSection');
+    const list = document.getElementById('jobAttachedEvidenceList');
+    const countEl = document.getElementById('jobAttachedEvidenceCount');
+    if (!section || !list) return;
+    const items = (currentJob && currentJob.attachedEvidence) || [];
+    if (!items.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    if (countEl) countEl.textContent = items.length + ' kanıt';
+    list.innerHTML = items.map(it => {
+      const thumb = it.thumb
+        ? '<img src="' + it.thumb + '" style="width:48px; height:48px; border-radius:8px; object-fit:cover; flex-shrink:0;">'
+        : '<div style="width:48px; height:48px; border-radius:8px; background:var(--surface-2,#f5f4f0); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">' + (it.icon || '•') + '</div>';
+      return '<div style="display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--surface,#fff); border:1px solid var(--border,#eee); border-radius:10px;">' +
+        thumb +
+        '<div style="font-size:13px; color:var(--text,#1a1a18); flex:1;">' + (it.label || '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+  window.renderJobAttachedEvidence = renderJobAttachedEvidence;
   function jobStartDiag() {
     const j = currentJob;
     startDiagnosis(j.name + ' · ' + (j.code || '') + ' ' + j.complaint, j.wo);
@@ -7010,15 +7024,15 @@
     if (allRequired) {
       btn.classList.add('ready');
       btn.disabled = false;
-      btn.textContent = `Teşhis Al → (${evState.items.length} kanıt)`;
+      btn.textContent = `Kanıtları İşe Bağla → (${evState.items.length} kanıt)`;
     } else {
       btn.classList.remove('ready');
       btn.disabled = true;
-      btn.textContent = 'Teşhis Al →';
+      btn.textContent = 'Kanıtları İşe Bağla →';
     }
 
     // Card done states
-    ['photo','thermal','label','audio','video','measure','error','note'].forEach(t => {
+    ['photo','thermal','label','audio','video','measure','error'].forEach(t => {
       const card = document.getElementById('evCard-' + t);
       if (!card) return;
       const has = haveTypes.has(t);
@@ -7352,6 +7366,43 @@
   window.evRemove = evRemove;
   window.getEvState = function() { return evState; };
   window.evSubmit = evSubmit;
+
+  // Kanıtları aktif iş emrine bağla ve s-job ekranına dön
+  function evAttachToJob() {
+    const btn = document.getElementById('evCtaBtn');
+    if (btn && btn.disabled) return;
+    if (evState.audioRecording) evStopAudio();
+
+    const evIconMap = {
+      photo:     { icon: '📷',  label: 'Fotoğraf' },
+      thermal:   { icon: '🌡️', label: 'Termal görüntü' },
+      label:     { icon: '🏷️', label: 'Etiket / Seri No' },
+      audio:     { icon: '🎙',  label: 'Ses kaydı' },
+      video:     { icon: '🎥',  label: 'Video' },
+      measure:   { icon: '📏',  label: 'Ölçüm' },
+      error:     { icon: '⚠️', label: 'Hata kodu' }
+    };
+
+    const attached = evState.items.map(it => {
+      const fb = evIconMap[it.type] || { icon: '•', label: it.type || 'Kanıt' };
+      return {
+        type: it.type,
+        icon: fb.icon,
+        label: it.label || fb.label,
+        thumb: it.thumb || null
+      };
+    });
+
+    if (typeof currentJob !== 'undefined' && currentJob) {
+      currentJob.attachedEvidence = (currentJob.attachedEvidence || []).concat(attached);
+    }
+
+    showScreen('job');
+    setTab(0);
+    renderJobAttachedEvidence();
+    if (typeof showToast === 'function') showToast(attached.length + ' kanıt işe bağlandı');
+  }
+  window.evAttachToJob = evAttachToJob;
 
   document.addEventListener('gesturestart', e => e.preventDefault());
 </script>
