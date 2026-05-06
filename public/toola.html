@@ -4668,6 +4668,10 @@
             <div class="ev-card-icon">⚠️</div>
             <div class="ev-card-label">Hata Kodu</div>
           </div>
+          <div class="ev-card" id="evCard-note" onclick="evOpenSheet('note')">
+            <div class="ev-card-icon">📝</div>
+            <div class="ev-card-label">Not</div>
+          </div>
         </div>
 
         <div class="ev-preview-section">
@@ -4706,6 +4710,17 @@
         <div class="ev-sheet-actions">
           <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
           <button class="ev-sheet-btn save" onclick="evSaveError()">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="ev-sheet" id="evSheet-note">
+        <div class="ev-sheet-handle"></div>
+        <div class="ev-sheet-title">Not Ekle</div>
+        <textarea class="ev-sheet-input" id="evNoteInput" placeholder="Gözlemini yaz..." maxlength="280" oninput="document.getElementById('evNoteCount').textContent=this.value.length"></textarea>
+        <div class="ev-sheet-char-count"><span id="evNoteCount">0</span> / 280</div>
+        <div class="ev-sheet-actions">
+          <button class="ev-sheet-btn cancel" onclick="evCloseSheet()">İptal</button>
+          <button class="ev-sheet-btn save" onclick="evSaveNote()">Kaydet</button>
         </div>
       </div>
 
@@ -7186,10 +7201,11 @@
     document.getElementById('evSheet-' + kind).classList.add('show');
     if (kind === 'measure') setTimeout(() => document.getElementById('evMeasureValue').focus(), 200);
     if (kind === 'error') setTimeout(() => document.getElementById('evErrorInput').focus(), 200);
+    if (kind === 'note') setTimeout(() => document.getElementById('evNoteInput').focus(), 200);
   }
   function evCloseSheet() {
     document.getElementById('evSheetBackdrop').classList.remove('show');
-    ['measure','error'].forEach(k => document.getElementById('evSheet-' + k).classList.remove('show'));
+    ['measure','error','note'].forEach(k => document.getElementById('evSheet-' + k).classList.remove('show'));
   }
   function evSaveMeasure() {
     const v = document.getElementById('evMeasureValue').value.trim();
@@ -7204,6 +7220,14 @@
     if (!v) return;
     evAdd({ type:'error', label: '⚠️ ' + v });
     document.getElementById('evErrorInput').value = '';
+    evCloseSheet();
+  }
+  function evSaveNote() {
+    const v = document.getElementById('evNoteInput').value.trim();
+    if (!v) return;
+    evAdd({ type:'note', label: '📝 ' + v });
+    document.getElementById('evNoteInput').value = '';
+    document.getElementById('evNoteCount').textContent = '0';
     evCloseSheet();
   }
 
@@ -7345,6 +7369,7 @@
   window.evCloseSheet = evCloseSheet;
   window.evSaveMeasure = evSaveMeasure;
   window.evSaveError = evSaveError;
+  window.evSaveNote = evSaveNote;
   window.evRemove = evRemove;
   window.getEvState = function() { return evState; };
   window.evSubmit = evSubmit;
