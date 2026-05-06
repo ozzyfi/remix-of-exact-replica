@@ -7185,11 +7185,10 @@
     document.getElementById('evSheet-' + kind).classList.add('show');
     if (kind === 'measure') setTimeout(() => document.getElementById('evMeasureValue').focus(), 200);
     if (kind === 'error') setTimeout(() => document.getElementById('evErrorInput').focus(), 200);
-    if (kind === 'note') setTimeout(() => document.getElementById('evNoteInput').focus(), 200);
   }
   function evCloseSheet() {
     document.getElementById('evSheetBackdrop').classList.remove('show');
-    ['measure','error','note'].forEach(k => document.getElementById('evSheet-' + k).classList.remove('show'));
+    ['measure','error'].forEach(k => document.getElementById('evSheet-' + k).classList.remove('show'));
   }
   function evSaveMeasure() {
     const v = document.getElementById('evMeasureValue').value.trim();
@@ -7206,21 +7205,7 @@
     document.getElementById('evErrorInput').value = '';
     evCloseSheet();
   }
-  function evSaveNote() {
-    const v = document.getElementById('evNoteInput').value.trim();
-    if (!v) return;
-    const short = v.length > 40 ? v.slice(0,40) + '…' : v;
-    evAdd({ type:'note', label: '📝 ' + short });
-    document.getElementById('evNoteInput').value = '';
-    document.getElementById('evNoteCount').textContent = '0';
-    evCloseSheet();
-  }
 
-  document.addEventListener('input', (e) => {
-    if (e.target && e.target.id === 'evNoteInput') {
-      document.getElementById('evNoteCount').textContent = e.target.value.length;
-    }
-  });
 
   async function evSubmit() {
     const btn = document.getElementById('evCtaBtn');
