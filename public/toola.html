@@ -6965,9 +6965,6 @@
     document.getElementById('evSubtitle').textContent =
       evState.equipment + ' · ' + evState.location;
 
-    const iconMap = { photo:'📷', audio:'🎙', video:'🎥', measure:'📏', error:'⚠️', note:'📝' };
-    document.getElementById('evRequiredIcons').textContent =
-      evState.required.map(r => iconMap[r] || '•').join(' ');
 
     // Reset cards
     ['photo','thermal','label','audio','video','measure','error'].forEach(t => {
