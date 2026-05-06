@@ -6967,7 +6967,7 @@
       evState.required.map(r => iconMap[r] || '•').join(' ');
 
     // Reset cards
-    ['photo','thermal','label','audio','video','measure','error','note'].forEach(t => {
+    ['photo','thermal','label','audio','video','measure','error'].forEach(t => {
       const c = document.getElementById('evCard-' + t);
       if (c) {
         c.classList.remove('done','active','recording');
