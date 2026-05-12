@@ -4839,6 +4839,33 @@
     <div class="toast" id="toast"></div>
 
     <!-- SUCCESS -->
+    <!-- ===== CLOSE JOB BOTTOM SHEET ===== -->
+    <div class="close-sheet-backdrop" id="closeSheetBackdrop" onclick="closeJobSheet()"></div>
+    <div class="close-sheet" id="closeJobSheet">
+      <div class="close-sheet-handle"></div>
+      <div class="close-sheet-title" id="closeSheetTitle">İşi Kapat</div>
+      <div class="close-sheet-sub" id="closeSheetSub">WO-4471 · BSF 36-4.16H</div>
+      <div class="close-section-label">Kullanılan Parçalar</div>
+      <div id="closePartsList"></div>
+      <button class="close-add-part" onclick="closeSheetAddPart()">+ Farklı parça ekle</button>
+      <div class="close-section-label">Toplanan Kanıtlar</div>
+      <div class="close-evidence-row" id="closeEvidenceList">
+        <div style="font-size:13px; color:var(--text-3); font-style:italic;">Henüz kanıt eklenmedi</div>
+      </div>
+      <div class="close-section-label">Durum</div>
+      <div class="close-status-row">
+        <button class="close-status-btn active" id="closeStatusDone" onclick="closeSheetSetStatus('done')">✓ Tamamlandı</button>
+        <button class="close-status-btn" id="closeStatusPartial" onclick="closeSheetSetStatus('partial')">⚡ Kısmi</button>
+        <button class="close-status-btn" id="closeStatusFail" onclick="closeSheetSetStatus('fail')">✗ Tamamlanamadı</button>
+      </div>
+      <div class="close-section-label">Not <span style="font-weight:400; text-transform:none; letter-spacing:0;">(opsiyonel)</span></div>
+      <textarea class="close-note-input" id="closeNoteInput" placeholder="Kısa gözlem veya not..."></textarea>
+      <button class="btn btn-primary" style="width:100%;" onclick="closeSheetSubmit()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        Kapat ve Gönder
+      </button>
+    </div>
+
     <div class="success-modal" id="successModal">
       <div class="success-card">
         <div class="success-icon">
