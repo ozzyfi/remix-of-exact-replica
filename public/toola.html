@@ -5231,7 +5231,94 @@
   }
   function jobGoClose() {
     const j = currentJob;
-    goClose({ from:'job', woId: j.wo, machine: j.name });
+    document.getElementById('closeSheetTitle').textContent = 'İşi Kapat';
+    document.getElementById('closeSheetSub').textContent = (j.wo || '') + ' · ' + (j.name || '');
+    const checkedParts = [];
+    document.querySelectorAll('#jobPartsList .part.checked').forEach(el => {
+      const name = el.querySelector('.part-name')?.textContent || '';
+      const meta = el.querySelector('.part-meta')?.textContent || '';
+      const code = meta.split('·')[0]?.trim() || '';
+      if (name) checkedParts.push({ name, code });
+    });
+    const partsToShow = checkedParts.length > 0 ? checkedParts : (j.parts || []).map(p => ({ name: p.name, code: p.code }));
+    window.__closeSheetParts = partsToShow.map(p => ({ ...p, status: 'used' }));
+    renderCloseSheetParts();
+    const evidence = (j.attachedEvidence) || [];
+    const evList = document.getElementById('closeEvidenceList');
+    if (evidence.length > 0) {
+      evList.innerHTML = evidence.map(e =>
+        '<div class="close-ev-chip">' + (e.icon || '📎') + ' ' + (e.label || e.type) + '</div>'
+      ).join('');
+    } else {
+      evList.innerHTML = '<div style="font-size:13px; color:var(--text-3); font-style:italic;">Henüz kanıt eklenmedi</div>';
+    }
+    closeSheetSetStatus('done');
+    document.getElementById('closeNoteInput').value = '';
+    document.getElementById('closeSheetBackdrop').classList.add('show');
+    document.getElementById('closeJobSheet').classList.add('show');
+  }
+  function renderCloseSheetParts() {
+    const list = document.getElementById('closePartsList');
+    const parts = window.__closeSheetParts || [];
+    if (parts.length === 0) {
+      list.innerHTML = '<div style="font-size:13px; color:var(--text-3); font-style:italic; margin-bottom:8px;">Parça seçilmedi</div>';
+      return;
+    }
+    list.innerHTML = parts.map((p, i) => `
+      <div class="close-part-row">
+        <div class="close-part-info">
+          <div class="close-part-name">${p.name}</div>
+          <div class="close-part-code">${p.code || ''}</div>
+        </div>
+        <div class="close-part-btns">
+          <button class="close-part-btn ${p.status === 'used' ? 'active-used' : ''}"
+            id="cpBtn-used-${i}" onclick="closeSheetPartStatus(${i},'used')">✓ Takıldı</button>
+          <button class="close-part-btn ${p.status === 'returned' ? 'active-returned' : ''}"
+            id="cpBtn-ret-${i}" onclick="closeSheetPartStatus(${i},'returned')">↩ İade</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  function closeSheetPartStatus(i, status) {
+    if (!window.__closeSheetParts) return;
+    window.__closeSheetParts[i].status = status;
+    renderCloseSheetParts();
+  }
+  function closeSheetSetStatus(s) {
+    window.__closeSheetStatus = s;
+    ['done','partial','fail'].forEach(k => {
+      const btn = document.getElementById('closeStatus' + k.charAt(0).toUpperCase() + k.slice(1));
+      if (btn) btn.classList.toggle('active', k === s);
+    });
+  }
+  function closeSheetAddPart() {
+    const name = prompt('Parça adı:');
+    if (!name) return;
+    window.__closeSheetParts = window.__closeSheetParts || [];
+    window.__closeSheetParts.push({ name: name, code: 'Manuel', status: 'used' });
+    renderCloseSheetParts();
+  }
+  function closeJobSheet() {
+    document.getElementById('closeSheetBackdrop').classList.remove('show');
+    document.getElementById('closeJobSheet').classList.remove('show');
+  }
+  function closeSheetSubmit() {
+    const j = currentJob;
+    const parts = window.__closeSheetParts || [];
+    const status = window.__closeSheetStatus || 'done';
+    const note = document.getElementById('closeNoteInput').value.trim();
+    closeJobSheet();
+    const successId = document.getElementById('successId');
+    const successSub = document.getElementById('successSub');
+    if (successId) { successId.textContent = j.wo || ''; successId.style.display = 'inline-block'; }
+    const usedCount = parts.filter(p => p.status === 'used').length;
+    if (successSub) successSub.innerHTML = 'SAP ve Maximo\'ya gönderildi.<br>' + usedCount + ' parça kullanıldı · Kurumsal hafızaya eklendi.';
+    document.getElementById('successModal').classList.add('active');
+    const state = window.__APP_STATE__ || {};
+    const gain = 15;
+    const newScore = (state.contributionScore || 0) + gain;
+    window.__APP_STATE__ = { ...state, contributionScore: newScore };
+    try { window.parent?.postMessage({ type: 'TOOLA_STATE_PATCH', payload: { contributionScore: newScore } }, '*'); } catch {}
   }
 
   // Show a quick toast message
