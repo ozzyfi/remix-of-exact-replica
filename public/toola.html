@@ -4953,9 +4953,7 @@
         const code = meta.split('·')[0]?.trim() || '';
         if (name) parts.push({ name, code, status: 'used' });
       });
-      if (parts.length === 0 && currentJob?.parts) {
-        currentJob.parts.forEach(p => parts.push({ name: p.name, code: p.code || '', status: 'used' }));
-      }
+      // Don't auto-fill — let technician explicitly add parts
       window.__closeParts = parts;
       if (parts.length > 0) {
         closeParts.style.display = 'block';
