@@ -4983,6 +4983,40 @@
     setTab(2);
   }
 
+  function renderCloseParts() {
+    const list = document.getElementById('closePartsList');
+    if (!list) return;
+    const parts = window.__closeParts || [];
+    list.innerHTML = parts.map((p, i) => `
+      <div class="close-part-row">
+        <div class="close-part-info">
+          <div class="close-part-name">${p.name}</div>
+          ${p.code ? '<div class="close-part-code">' + p.code + '</div>' : ''}
+        </div>
+        <div class="close-part-btns">
+          <button class="close-part-btn ${p.status === 'used' ? 'is-used' : ''}"
+            onclick="setClosePartStatus(${i},'used')">✓ Takıldı</button>
+          <button class="close-part-btn ${p.status === 'returned' ? 'is-returned' : ''}"
+            onclick="setClosePartStatus(${i},'returned')">↩ İade</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  function setClosePartStatus(i, status) {
+    if (!window.__closeParts || !window.__closeParts[i]) return;
+    window.__closeParts[i].status = status;
+    renderCloseParts();
+  }
+  function closeAddExtraPart() {
+    const name = prompt('Parça adı:');
+    if (!name) return;
+    window.__closeParts = window.__closeParts || [];
+    window.__closeParts.push({ name, code: 'Manuel', status: 'used' });
+    const section = document.getElementById('closePartsSection');
+    if (section) section.style.display = 'block';
+    renderCloseParts();
+  }
+
   // Bottom tab navigation to WO list — defaults to history
   function goCloseFromMenu() {
     goClose({ from: 'menu', woId: null });
