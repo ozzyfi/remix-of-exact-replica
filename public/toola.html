@@ -6622,14 +6622,12 @@
     },
     parca: {
       fields: [
-        { id: 'parca',     label: 'Değiştirilen Parça', req: true, type: 'input', placeholder: 'Hangi parça değiştirildi?' },
-        { id: 'nedenDeg',  label: 'Neden Değiştirildi', req: true, type: 'input', placeholder: 'Parçanın değiştirilme sebebi nedir?' },
-        { id: 'parcaNo',   label: 'Parça No / Tedarikçi', req: true, type: 'input', placeholder: 'Parça numarası veya tedarikçi bilgisi' }
+        { id: 'nedenDeg', label: 'Neden Değiştirildi', req: true, type: 'input', placeholder: 'Parçanın değiştirilme sebebi nedir?' },
+        { id: 'notlar',   label: 'Ek Notlar',           req: false, type: 'textarea', placeholder: 'Varsa ek gözlem veya bilgi' }
       ],
       autofill: {
-        parca: 'Hidrolik yağ filtresi',
         nedenDeg: 'Fark basıncı 1,2 bar, limit 0,8 bar aşıldı. Tıkanma tespit edildi.',
-        parcaNo: 'HF-0330 · Putzmeister OEM'
+        notlar: ''
       },
       voiceSample: 'Yağ filtresini değiştirdim. Tıkanmıştı. Parça numarası HF-0330, Putzmeister orijinal.'
     },
