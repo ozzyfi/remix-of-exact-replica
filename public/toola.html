@@ -6651,14 +6651,12 @@
       fields: [
         { id: 'ariza',   label: 'Arıza',         req: true, type: 'input',    placeholder: 'Arıza ne idi?' },
         { id: 'neden',   label: 'Nedeni',        req: true, type: 'input',    placeholder: 'Arızanın sebebi ne idi?' },
-        { id: 'yapilan', label: 'Yapılan işlem', req: true, type: 'textarea', placeholder: 'Hangi işlem yapıldı? Varsa parça no belirtin.' },
-        { id: 'sure',    label: 'Süre (dk)',     req: false,type: 'input',    placeholder: '0' }
+        { id: 'yapilan', label: 'Yapılan işlem', req: true, type: 'textarea', placeholder: 'Hangi işlem yapıldı? Varsa parça no belirtin.' }
       ],
       autofill: {
         ariza: 'Hidrolik basınç düşüklüğü',
         neden: 'Yağ filtresi tıkanıklığı (fark basıncı 1,2 bar)',
-        yapilan: 'HSE prosedürü uygulandı. Yağ filtresi HF-0330 değiştirildi. Basınç testi 198 bar, nominal aralıkta.',
-        sure: '45'
+        yapilan: 'HSE prosedürü uygulandı. Yağ filtresi HF-0330 değiştirildi. Basınç testi 198 bar, nominal aralıkta.'
       },
       voiceSample: 'Hidrolik pompa basıncı düşüktü. Filtre tıkanmış, yağ filtresini değiştirdim. 45 dakika sürdü.'
     },
