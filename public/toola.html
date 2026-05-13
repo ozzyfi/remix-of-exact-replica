@@ -6916,6 +6916,9 @@
 
     // ---- Collect form values ----
     const category = currentCat;
+    const usedParts = (window.__closeParts || []).map(p => ({
+      name: p.name, code: p.code, status: p.status || 'used'
+    }));
     const spec = CATEGORY_FORMS[category];
     const formValues = {};
     (spec?.fields || []).forEach(f => {
