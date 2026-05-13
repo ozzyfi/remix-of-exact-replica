@@ -4941,6 +4941,43 @@
       switchWoTab('new');
     }
 
+    // Populate used parts
+    const closeParts = document.getElementById('closePartsSection');
+    const closePartsList = document.getElementById('closePartsList');
+    if (closeParts && closePartsList) {
+      const checkedEls = document.querySelectorAll('#jobPartsList .part.checked');
+      const parts = [];
+      checkedEls.forEach(el => {
+        const name = el.querySelector('.part-name')?.textContent || '';
+        const meta = el.querySelector('.part-meta')?.textContent || '';
+        const code = meta.split('·')[0]?.trim() || '';
+        if (name) parts.push({ name, code, status: 'used' });
+      });
+      if (parts.length === 0 && currentJob?.parts) {
+        currentJob.parts.forEach(p => parts.push({ name: p.name, code: p.code || '', status: 'used' }));
+      }
+      window.__closeParts = parts;
+      if (parts.length > 0) {
+        closeParts.style.display = 'block';
+        renderCloseParts();
+      } else {
+        closeParts.style.display = 'none';
+      }
+    }
+    // Populate evidence
+    const closeEvSection = document.getElementById('closeEvSection');
+    const closeEvChips = document.getElementById('closeEvChips');
+    if (closeEvSection && closeEvChips) {
+      const evItems = (currentJob && currentJob.attachedEvidence) || [];
+      if (evItems.length > 0) {
+        closeEvSection.style.display = 'block';
+        closeEvChips.innerHTML = evItems.map(e =>
+          '<div class="close-ev-chip">' + (e.icon || '📎') + ' ' + (e.label || e.type || '') + '</div>'
+        ).join('');
+      } else {
+        closeEvSection.style.display = 'none';
+      }
+    }
     renderCapturePanels();
     showScreen('close');
     setTab(2);
