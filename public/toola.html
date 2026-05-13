@@ -7067,6 +7067,15 @@
     resetVoiceCallState();
     // Reset context
     closeContext = { woId: null, machine: 'BSF 36-4.16H', from: null };
+    // Reset parts and evidence state
+    window.__closeParts = [];
+    if (typeof currentJob !== 'undefined' && currentJob) {
+      currentJob.attachedEvidence = [];
+    }
+    const closePartsSection = document.getElementById('closePartsSection');
+    const closeEvSection = document.getElementById('closeEvSection');
+    if (closePartsSection) closePartsSection.style.display = 'none';
+    if (closeEvSection) closeEvSection.style.display = 'none';
     goHome();
   }
 
