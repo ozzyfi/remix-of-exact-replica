@@ -5130,9 +5130,6 @@
         // Could take from failure if there's one
       } else if (f.id === 'notlar' || f.id === 'notlar2') {
         if (measurements) value = 'Ölçümler: ' + measurements;
-      } else if (f.id === 'sure') {
-        const sureObs = obs.find(o => o.type === 'measurement' && /dakika|dk|sa\b|saat/i.test(o.value));
-        if (sureObs) value = sureObs.value.replace(/[^\d]/g, '');
       }
 
       if (value) {
@@ -7193,7 +7190,7 @@
     }
 
     // Card done states
-    ['photo','thermal','label','audio','video','measure','error'].forEach(t => {
+    ['photo','thermal','label','audio','video','measure','error','note'].forEach(t => {
       const card = document.getElementById('evCard-' + t);
       if (!card) return;
       const has = haveTypes.has(t);
