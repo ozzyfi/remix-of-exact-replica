@@ -4399,7 +4399,7 @@
     <!-- ===== CLOSE FORM ===== -->
     <div class="screen" id="s-close">
       <div class="topbar">
-        <button class="topbar-back" onclick="goHome()">
+        <button class="topbar-back" onclick="closeGoBack()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
           Geri
         </button>
@@ -4977,6 +4977,16 @@
     renderCapturePanels();
     showScreen('close');
     setTab(2);
+  }
+
+  function closeGoBack() {
+    if (closeContext.from === 'job') {
+      showScreen('job'); setTab(0);
+    } else if (closeContext.from === 'answer') {
+      showScreen('answer');
+    } else {
+      goHome();
+    }
   }
 
   function renderCloseParts() {
