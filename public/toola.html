@@ -5188,7 +5188,10 @@
   }
   let currentJob = { name:'BSF 36-4.16H Bom Pompası', loc:'Başakşehir, İstanbul', wo:'WO-4471', code:'H-201', complaint:'Hidrolik basınç düşüklüğü alarmı. Ana pompa ve basınç valfi kontrol edilecek.', priority:'high', required:['photo','audio'] };
   function openJob(data) {
-    if (data && typeof data === 'object') currentJob = Object.assign({}, currentJob, data);
+    if (data && typeof data === 'object') {
+      currentJob = Object.assign({}, currentJob, data);
+      currentJob.attachedEvidence = [];
+    }
     const j = currentJob;
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     set('jobDetailName', j.name);
