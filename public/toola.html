@@ -6921,6 +6921,17 @@
     const successSub = document.getElementById('successSub');
     const woCode = closeContext.woId || null;
 
+    // Validate required fields
+    const reqFields = (CATEGORY_FORMS[currentCat]?.fields || []).filter(f => f.req);
+    const missing = reqFields.filter(f => {
+      const el = document.getElementById('f-' + f.id);
+      return !el || !el.value.trim();
+    });
+    if (missing.length > 0) {
+      showToast('Lütfen zorunlu alanları doldurun: ' + missing.map(f => f.label).join(', '));
+      return;
+    }
+
     // ---- Collect form values ----
     const category = currentCat;
     const usedParts = (window.__closeParts || []).map(p => ({
