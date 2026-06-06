@@ -308,8 +308,8 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        max_tokens: 2000,
+        model: "google/gemini-2.5-flash",
+        max_tokens: 4000,
         messages,
         tools: [tool],
         tool_choice: { type: "function", function: { name: tool.function.name } },
@@ -330,12 +330,32 @@ Deno.serve(async (req: Request) => {
 
     const data = await aiResp.json();
     const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
-    const argsStr = toolCall?.function?.arguments;
-    const rawText = data?.choices?.[0]?.message?.content ?? "";
+    let argsStr: string | undefined = toolCall?.function?.arguments;
+    const rawText: string = data?.choices?.[0]?.message?.content ?? "";
+
+    // Fallback: model tool_call yapmadıysa content'ten JSON çıkarmayı dene
+    if (!argsStr && rawText) {
+      const cleaned = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      const start = cleaned.search(/[\{\[]/);
+      const end = cleaned.lastIndexOf("}");
+      if (start !== -1 && end > start) {
+        const candidate = cleaned.substring(start, end + 1);
+        try {
+          JSON.parse(candidate);
+          argsStr = candidate;
+          console.log("tool_call yoktu, content'ten JSON çıkarıldı.");
+        } catch {
+          /* parse fail, fallthrough */
+        }
+      }
+    }
 
     if (!argsStr) {
       console.error("Tool call yok, ham yanıt:", JSON.stringify(data).slice(0, 1000));
-      return json(200, { type: "raw", text: rawText || "Yapılandırılmış çıktı alınamadı." });
+      return json(200, {
+        type: "raw",
+        text: rawText || "Cevap üretilemedi, lütfen soruyu farklı şekilde tekrar sor.",
+      });
     }
 
     let parsed: any;
