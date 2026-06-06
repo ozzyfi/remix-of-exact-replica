@@ -6515,8 +6515,13 @@
       area.appendChild(contextLabel);
       const ai = document.createElement('div');
       ai.className = 'bubble-ai';
-      ai.textContent = response.text || 'Cevap alınamadı.';
+      const rawTxt = response.text || 'Cevap alınamadı, tekrar dener misin?';
+      ai.innerHTML = `<p>${escapeHtml(rawTxt).replace(/\n/g, '<br>')}</p>` +
+        (response.error ? `<span class="mini-ref">${escapeHtml(response.error)}</span>` : '');
       area.appendChild(ai);
+      if (currentThread) {
+        currentThread.messages.push({ role: 'ai', text: rawTxt, ts: Date.now() });
+      }
     } else {
       // Info / signed response
       const contextLabel = document.createElement('div');
